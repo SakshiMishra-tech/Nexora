@@ -1,8 +1,45 @@
 # Nexora - Comprehensive Campus Networking Platform
 
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-19-61dafb.svg)
+![Vite](https://img.shields.io/badge/Vite-8.0-646cff.svg)
+![Supabase](https://img.shields.io/badge/Supabase-Backend-3ecf8e.svg)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-v4-38bdf8.svg)
+
+## 📌 Project Overview
 Nexora is a cutting-edge campus networking platform built exclusively for university students. It consolidates fragmented campus interactions into a single, unified ecosystem featuring a robust marketplace, secure roommate matching, peer-to-peer lost & found, dating, event tracking, and ride-sharing.
 
 This project is built with the modern React ecosystem, utilizing TanStack Start, React 19, Vite, Tailwind CSS v4, and Supabase for a fully typed, highly performant, and real-time experience.
+
+---
+
+## 📸 Landing Page
+
+![Nexora Landing Page](docs/images/landing.png)
+
+## 📊 Dashboard Preview
+
+![Nexora Dashboard](docs/images/dashboard.png)
+
+---
+
+## 📑 Table of Contents
+- [Project Overview](#-project-overview)
+- [Problem Statement](#-problem-statement)
+- [Vision](#-vision)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture Overview](#️-architecture-overview)
+- [Folder Structure](#-folder-structure)
+- [Installation & Development Setup](#️-installation--development-setup)
+- [Environment Variables](#-environment-variables)
+- [Authentication & Security](#-authentication--security)
+- [Database](#️-database)
+- [Deployment](#-deployment)
+- [Available Scripts](#-available-scripts)
+- [Contributing](#-contributing)
+- [Roadmap](#️-roadmap)
+- [License](#-license)
 
 ---
 
@@ -16,7 +53,7 @@ University students currently rely on fragmented, unsecured platforms (WhatsApp 
 ## 🚀 Vision
 Nexora aims to be the definitive "digital campus square." By requiring verifiable student status and restricting interactions to a local campus level, Nexora creates a high-trust, high-utility environment where students can securely trade, connect, and collaborate.
 
-## ✨ Features
+## ✨ Key Features
 - **Student Marketplace:** Buy, sell, and trade textbooks, electronics, and dorm essentials with real-time chat and offer management.
 - **Roommate Matching:** Find compatible roommates based on detailed lifestyle preferences, budget, and habits.
 - **Lost & Found:** Quickly report and claim lost items with geolocation and photo evidence.
@@ -35,7 +72,7 @@ Nexora aims to be the definitive "digital campus square." By requiring verifiabl
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
 Nexora utilizes a modern full-stack architecture where the frontend (React/TanStack) communicates directly with a secure PostgreSQL database via Supabase's PostgREST API. 
 
 For a deep dive into the architecture, component hierarchy, and data flow, please refer to the [Architecture Documentation](docs/ARCHITECTURE.md).
@@ -51,15 +88,6 @@ A detailed explanation of the project's directory layout and file relationships 
 - Node.js (v18 or higher)
 - npm or pnpm
 - A Supabase account (for local or cloud database)
-
-### Environment Variables
-Create a `.env` file in the root directory. You must supply your Supabase credentials:
-
-```env
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-*For a complete list of environment variables, refer to [Environment Documentation](docs/ENVIRONMENT.md).*
 
 ### Quick Start
 1. **Clone the repository:**
@@ -77,6 +105,17 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
    ```
 4. **Open your browser:**
    Navigate to `http://localhost:5173`.
+
+---
+
+## 🔑 Environment Variables
+Create a `.env` file in the root directory. You must supply your Supabase credentials:
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+*For a complete list of environment variables, refer to [Environment Documentation](docs/ENVIRONMENT.md).*
 
 ---
 
@@ -113,6 +152,11 @@ We welcome contributions to Nexora! Whether it's fixing bugs, adding features, o
 
 ## 🗺️ Roadmap
 Curious about what's next? Check out our [Future Roadmap](docs/ROADMAP.md) to see planned features like AI-assisted roommate matching and advanced event discovery.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 *Generated as part of Nexora's comprehensive documentation initiative.*
