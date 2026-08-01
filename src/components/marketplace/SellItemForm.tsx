@@ -1,117 +1,102 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  ShoppingBag,
+  User,
+  Image as ImageIcon,
+  Plus,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Loader2,
+  Tag,
+  MapPin,
+  AlertCircle,
+  GripVertical,
+  Star,
+  Trash,
+  Sparkles,
+  Laptop,
+  Bike,
+  BedDouble,
+  Shirt,
+  Gamepad2,
+  Trophy,
+  Music,
+  Wrench,
+  GraduationCap,
+  NotebookPen,
+  Package,
+  BookOpen,
+  Heart,
+  Info,
+  Tv,
+  HelpCircle,
+  Upload
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   MARKETPLACE_CATEGORIES,
   MARKETPLACE_CONDITIONS,
   type ListingFormValues,
   emptyListingForm,
+  type MarketplaceListing
 } from "@/lib/marketplace";
 import {
   validateListingForm,
   parseAndValidateTags,
   parseAndValidateSpecifications,
 } from "@/lib/marketplace-validation";
-import {
-  Upload,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Plus,
-  Loader2,
-  Tag,
-  MapPin,
-  Image as ImageIcon,
-  AlertCircle,
-  GripVertical,
-  Star,
-} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface SellItemFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialValues?: ListingFormValues;
-  /** May return a Promise — the form stays in loading state until it resolves. */
-  onSubmit: (
-    values: ListingFormValues,
-    isDraft: boolean,
-  ) => Promise<void> | void;
+  onSubmit: (values: ListingFormValues, isDraft: boolean) => Promise<void> | void;
 }
 
-const MAX_IMAGES = 12;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const COMPRESS_THRESHOLD = 1.5 * 1024 * 1024; // Compress if > 1.5 MB
-const COMPRESS_MAX_WIDTH = 1920;
-const COMPRESS_QUALITY = 0.82;
+type WizardStep =
+  | "category"
+  | "details"
+  | "media"
+  | "success";
+
+const MAX_IMAGES = 10;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
-type Step = "details" | "images";
+// Category configuration
+const CATEGORIES_WIZARD = [
+  { id: "Books", name: "Books", emoji: "📚", icon: BookOpen, desc: "Textbooks, reference guides, exam preparation bundles" },
+  { id: "Electronics", name: "Electronics", emoji: "💻", icon: Laptop, desc: "Laptops, phones, smartwatches, calculators, adapters" },
+  { id: "Cycles", name: "Cycles", emoji: "🚲", icon: Bike, desc: "Campus commutes, bicycles, helmets, lock stacks" },
+  { id: "Hostel Essentials", name: "Hostel Essentials", emoji: "🛏", icon: BedDouble, desc: "Mattresses, tables, mirrors, extension cables" },
+  { id: "Furniture", name: "Furniture", emoji: "🪑", icon: Package, desc: "Chairs, bookshelves, study tables" },
+  { id: "Fashion", name: "Fashion", emoji: "👕", icon: Shirt, desc: "University hoodies, lab coats, sneakers, bags" },
+  { id: "Gaming", name: "Gaming", emoji: "🎮", icon: Gamepad2, desc: "Gaming consoles, controller accessories, game CDs" },
+  { id: "Sports", name: "Sports", emoji: "🏸", icon: Trophy, desc: "Badminton rackets, cricket kits, dumbbells" },
+  { id: "Notes", name: "Notes", emoji: "📖", icon: NotebookPen, desc: "Handwritten semester notes, summaries, worksheets" },
+  { id: "Others", name: "Others", emoji: "📦", icon: Package, desc: "Miscellaneous campus items & services" }
+];
 
-/**
- * Compress an image File using canvas if it exceeds the threshold.
- * Returns the original file if it's small enough or compression fails.
- */
-async function compressImage(file: File): Promise<File> {
-  if (file.size <= COMPRESS_THRESHOLD) return file;
-  if (!ACCEPTED_TYPES.includes(file.type)) return file;
-
-  return new Promise<File>((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-
-      let { width, height } = img;
-      if (width > COMPRESS_MAX_WIDTH) {
-        height = Math.round((height * COMPRESS_MAX_WIDTH) / width);
-        width = COMPRESS_MAX_WIDTH;
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { resolve(file); return; }
-
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob || blob.size >= file.size) {
-            resolve(file); // Compression didn't help
-            return;
-          }
-          const compressed = new File([blob], file.name, {
-            type: "image/webp",
-            lastModified: Date.now(),
-          });
-          resolve(compressed);
-        },
-        "image/webp",
-        COMPRESS_QUALITY,
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve(file);
-    };
-
-    img.src = url;
-  });
-}
+const SUBCATEGORIES: Record<string, string[]> = {
+  "Books": ["Textbooks", "Reference Books", "Exam Prep", "Novels", "Magazines"],
+  "Electronics": ["Laptops", "Smartphones", "Tablets", "Headphones", "Smart Watches", "Calculators", "Chargers & Cables"],
+  "Cycles": ["Cycles", "Helmets", "Locks & Chains", "Spare Parts"],
+  "Hostel Essentials": ["Mattresses", "Study Lamps", "Buckets & Mugs", "Hangers & Hooks", "Mirrors", "Extension Boards"],
+  "Furniture": ["Chairs", "Tables", "Wardrobes", "Book Shelves"],
+  "Fashion": ["Clothes", "Shoes", "Backpacks", "Watches"],
+  "Gaming": ["Consoles", "Controllers", "Video Games", "Gaming Accessories"],
+  "Sports": ["Badminton Rackets", "Cricket Bats", "Footballs", "Gym & Dumbbells"],
+  "Notes": ["Class Notes", "Exam Summaries", "Handwritten Stack"],
+  "Others": ["Lab Coats", "Drafters & T-Squares", "Decorations", "Miscellaneous"]
+};
 
 export function SellItemForm({
   open,
@@ -119,833 +104,551 @@ export function SellItemForm({
   initialValues,
   onSubmit,
 }: SellItemFormProps) {
-  const [step, setStep] = useState<Step>("details");
-  const [values, setValues] = useState<ListingFormValues>(
-    initialValues ?? emptyListingForm,
-  );
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof ListingFormValues, string>>
-  >({});
+  const [step, setStep] = useState<WizardStep>("category");
+  const [values, setValues] = useState<ListingFormValues>(initialValues ?? emptyListingForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof ListingFormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [compressing, setCompressing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
+  
+  // Dynamic Specifications fields State
+  const [specs, setSpecs] = useState<Record<string, string>>({});
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Books");
+
+  const { profile, user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
   const isEdit = Boolean(initialValues);
+  const isInitialized = useRef(false);
 
-  const draftValidation = useMemo(() => validateListingForm(values, true), [values]);
-  const publishValidation = useMemo(() => validateListingForm(values, false), [values]);
-
-  const isDraftDisabled = !draftValidation.isValid;
-  const isPublishDisabled = !publishValidation.isValid;
-
-  /**
-   * Map from File object → object URL for display.
-   * Using a ref avoids re-renders on map mutations.
-   */
-  const previewMapRef = useRef<Map<File, string>>(new Map());
-
-  /** Clean up object URLs when the component unmounts */
+  // Autosave Draft every 5 seconds
   useEffect(() => {
-    return () => {
-      for (const url of previewMapRef.current.values()) {
-        URL.revokeObjectURL(url);
+    if (!open || step === "success") return;
+    const interval = setInterval(() => {
+      localStorage.setItem("nx-listing-draft", JSON.stringify({ values, selectedCategory, selectedSubcategory, specs }));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [values, selectedCategory, selectedSubcategory, specs, open, step]);
+
+  // Restore Draft on mount / modal open - Run ONLY ONCE when open goes false -> true
+  useEffect(() => {
+    if (!open) {
+      isInitialized.current = false;
+      return;
+    }
+
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    if (initialValues) {
+      setValues({
+        ...initialValues,
+        images: initialValues.images || [],
+      });
+      setSelectedCategory(initialValues.category || "Books");
+      // Deserialize specs
+      const specMap: Record<string, string> = {};
+      if (initialValues.specifications) {
+        initialValues.specifications.split(",").forEach(pair => {
+          const [k, v] = pair.split(":").map(s => s.trim());
+          if (k && v) specMap[k] = v;
+        });
       }
-    };
-  }, []);
-
-  /** Update form values when modal opens or initialValues change */
-  useEffect(() => {
-    if (open) {
-      const initVals = initialValues ?? emptyListingForm;
-      setValues(initVals);
-      
-      // Smart Draft Resumption
-      let initialStep: Step = "details";
-      if (initialValues) {
-        const detailsValid = 
-          initVals.title.trim().length >= 4 &&
-          initVals.description.trim().length >= 18 &&
-          initVals.price !== "" &&
-          (initVals.category as string) !== "" &&
-          initVals.pickupArea.trim().length > 0;
-          
-        if (detailsValid && initVals.images.length === 0) {
-          initialStep = "images";
+      setSpecs(specMap);
+      setStep("category");
+    } else {
+      const saved = localStorage.getItem("nx-listing-draft");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (window.confirm("You have an unsaved draft. Would you like to restore it?")) {
+            setValues({
+              ...parsed.values,
+              images: parsed.values.images || [],
+            });
+            setSelectedCategory(parsed.selectedCategory || "Books");
+            setSelectedSubcategory(parsed.selectedSubcategory || "");
+            setSpecs(parsed.specs || {});
+            setStep("details");
+            return;
+          } else {
+            localStorage.removeItem("nx-listing-draft");
+          }
+        } catch(e) {
+          console.error(e);
         }
       }
-      
-      setStep(initialStep);
-      setErrors({});
-      setSubmitError(null);
+      setValues(emptyListingForm);
+      setStep("category");
     }
   }, [open, initialValues]);
 
-  /** Get the displayable URL for an image in the form */
-  function getPreviewUrl(img: File | string): string {
-    if (typeof img === "string") return img;
-    return previewMapRef.current.get(img) ?? "";
-  }
-
-  const set = <K extends keyof ListingFormValues>(
-    k: K,
-    v: ListingFormValues[K],
-  ) => {
+  const setVal = <K extends keyof ListingFormValues>(k: K, v: ListingFormValues[K]) => {
     setValues((p) => ({ ...p, [k]: v }));
-    setErrors((p) => ({ ...p, [k]: undefined }));
   };
 
-  const validateDetails = () => {
-    const validation = validateListingForm(values, false);
-    const detailsErrors = { ...validation.errors };
-    delete detailsErrors.images;
-    setErrors(detailsErrors);
-    return Object.keys(detailsErrors).length === 0;
-  };
-
-  const processFiles = useCallback(async (fileList: File[]) => {
-    // If the total images (existing + new) would exceed the maximum limit, reject the whole action and warn the user
-    if (values.images.length + fileList.length > MAX_IMAGES) {
-      setErrors((p) => ({ ...p, images: `You can upload a maximum of ${MAX_IMAGES} images.` }));
-      return;
-    }
-
-    const duplicates: string[] = [];
-    const uniqueFilesToProcess: File[] = [];
-
-    // Check for duplicates (same name and size)
-    for (const file of fileList) {
-      const isDuplicate = values.images.some((existing) => {
-        if (existing instanceof File) {
-          return existing.name === file.name && existing.size === file.size;
+  // Convert files or strings into previewable URLs
+  const displayImageUrls = useMemo(() => {
+    const imgs = values.images || [];
+    return imgs.map((img) => {
+      if (typeof img === "string") return img;
+      if (img instanceof File) {
+        try {
+          return URL.createObjectURL(img);
+        } catch {
+          return "";
         }
-        return false;
-      });
-
-      const isAlreadyInNewList = uniqueFilesToProcess.some((f) => f.name === file.name && f.size === file.size);
-
-      if (isDuplicate || isAlreadyInNewList) {
-        duplicates.push(file.name);
-      } else {
-        uniqueFilesToProcess.push(file);
       }
-    }
+      return "";
+    });
+  }, [values.images]);
 
-    if (duplicates.length > 0) {
-      setErrors((p) => ({ ...p, images: `Duplicate images are not allowed: ${duplicates.join(", ")}` }));
+  // Drag and drop handlers
+  const handleFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    const newFiles = Array.from(fileList).filter((f) => ACCEPTED_TYPES.includes(f.type));
+    const imgs = values.images || [];
+    if (imgs.length + newFiles.length > MAX_IMAGES) {
+      toast.error(`You can upload a maximum of ${MAX_IMAGES} images.`);
       return;
     }
-
-    const validFiles: File[] = [];
-    const rejected: string[] = [];
-
-    for (const f of uniqueFilesToProcess) {
-      if (!ACCEPTED_TYPES.includes(f.type)) {
-        rejected.push(`${f.name}: unsupported format`);
-        continue;
-      }
-      if (f.size > MAX_FILE_SIZE) {
-        rejected.push(`${f.name}: exceeds 5 MB limit`);
-        continue;
-      }
-      validFiles.push(f);
-    }
-
-    if (rejected.length > 0) {
-      setErrors((p) => ({
-        ...p,
-        images: rejected.join("; "),
-      }));
-      return;
-    }
-
-    if (validFiles.length === 0) return;
-
-    // Compress images that are too large
-    setCompressing(true);
-    try {
-      const compressed = await Promise.all(validFiles.map(compressImage));
-      for (const f of compressed) {
-        previewMapRef.current.set(f, URL.createObjectURL(f));
-      }
-      setValues((prev) => ({
-        ...prev,
-        images: [...prev.images, ...compressed],
-      }));
-      setErrors((p) => ({ ...p, images: undefined }));
-    } finally {
-      setCompressing(false);
-    }
-  }, [values.images, values.images.length]);
-
-  const handleFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
-    processFiles(Array.from(files));
-  }, [processFiles]);
+    setVal("images", [...imgs, ...newFiles]);
+  };
 
   const removeImage = (idx: number) => {
-    const img = values.images[idx];
-    if (img instanceof File) {
-      const url = previewMapRef.current.get(img);
-      if (url) URL.revokeObjectURL(url);
-      previewMapRef.current.delete(img);
-    }
-    set("images", values.images.filter((_, i) => i !== idx));
+    const imgs = values.images || [];
+    setVal("images", imgs.filter((_, i) => i !== idx));
   };
 
-  const moveImage = (from: number, to: number) => {
-    const arr = [...values.images];
-    const [item] = arr.splice(from, 1);
-    arr.splice(to, 0, item);
-    set("images", arr);
-  };
-
-  // ── Drag & Drop on drop zone ──
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Only deactivate if leaving the drop zone entirely
-    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
-      processFiles(Array.from(files));
-    }
-  }, [processFiles]);
-
-  // ── Drag & Drop for reordering ──
-  const handleThumbDragStart = useCallback((idx: number) => {
-    setDragSourceIndex(idx);
-  }, []);
-
-  const handleThumbDragOver = useCallback((e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    setDragOverIndex(idx);
-  }, []);
-
-  const handleThumbDrop = useCallback((idx: number) => {
-    if (dragSourceIndex !== null && dragSourceIndex !== idx) {
-      moveImage(dragSourceIndex, idx);
-    }
-    setDragSourceIndex(null);
-    setDragOverIndex(null);
-  }, [dragSourceIndex, values.images]);
-
-  const handleThumbDragEnd = useCallback(() => {
-    setDragSourceIndex(null);
-    setDragOverIndex(null);
-  }, []);
-
-  const handleSubmit = async (isDraft: boolean) => {
-    const cleanTagsResult = parseAndValidateTags(values.tags);
-    const cleanSpecsResult = parseAndValidateSpecifications(values.specifications || "");
-    const cleanedValues = {
-      ...values,
-      tags: cleanTagsResult.error ? values.tags : (cleanTagsResult.cleaned ?? ""),
-      specifications: cleanSpecsResult.error ? values.specifications : (cleanSpecsResult.cleaned ?? ""),
-    };
-
-    const validation = validateListingForm(cleanedValues, isDraft);
-    if (!validation.isValid) {
-      setErrors(validation.errors);
-      if (!isDraft) {
-        const detailsErrors = { ...validation.errors };
-        delete detailsErrors.images;
-        if (Object.keys(detailsErrors).length > 0) {
-          setStep("details");
-        }
+  const handleNext = () => {
+    if (step === "category") {
+      if (!selectedSubcategory) {
+        toast.error("Please select a subcategory first.");
+        return;
       }
+      setStep("details");
+    } else if (step === "details") {
+      // Validate details, pricing and location inputs before moving forward
+      if (values.title.length < 5) {
+        setErrors({ title: "Title is too short. Minimum 5 characters." });
+        toast.error("Title must be at least 5 characters.");
+        return;
+      }
+      if (values.description.length < 25) {
+        setErrors({ description: "Description is too short. Minimum 25 characters." });
+        toast.error("Description must be at least 25 characters explaining the item.");
+        return;
+      }
+      if (!values.price || Number(values.price) <= 0) {
+        setErrors({ price: "Enter a valid expected price." });
+        toast.error("Please specify a valid expected selling price.");
+        return;
+      }
+      if (!values.pickupArea) {
+        setErrors({ pickupArea: "Pickup spot landmark is required." });
+        toast.error("Please supply a pickup area landmark.");
+        return;
+      }
+
+      setErrors({});
+      // Serialize specs to specifications
+      const serialized = Object.entries(specs)
+        .filter(([_, v]) => v.trim() !== "")
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      setVal("specifications", serialized);
+      setStep("media");
+    }
+  };
+
+  const handleBack = () => {
+    if (step === "details") setStep("category");
+    else if (step === "media") setStep("details");
+  };
+
+  const handlePublish = async (isDraftMode: boolean) => {
+    const finalValues = { ...values };
+
+    if (isDraftMode) {
+      // Auto-fill minimum draft requirements if they are empty
+      if (!finalValues.title.trim() || finalValues.title.length < 5) {
+        finalValues.title = "Draft - " + (selectedCategory || "Item");
+      }
+      if (!finalValues.description.trim() || finalValues.description.length < 25) {
+        finalValues.description = "Draft listing description. Please update this content with item details.";
+      }
+      if (!finalValues.price || Number(finalValues.price) <= 0) {
+        finalValues.price = "1";
+      }
+      if (!finalValues.pickupArea.trim()) {
+        finalValues.pickupArea = "Campus Handoff";
+      }
+    }
+
+    // Run core validation on finalValues
+    const validation = validateListingForm(finalValues, isDraftMode);
+    if (!validation.isValid) {
+      const firstError = Object.values(validation.errors).filter(Boolean)[0];
+      toast.error(firstError || "Please check all required fields.");
+      setErrors(validation.errors);
       return;
     }
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      setValues(cleanedValues);
-      await onSubmit(cleanedValues, isDraft);
-      onOpenChange(false);
-      setValues(emptyListingForm);
-      setStep("details");
-      setErrors({});
-    } catch (err: any) {
-      console.error("Publishing error details:", err);
-      const msg = err?.message || "Failed to save the item. Please check the fields and try again.";
+      await onSubmit(finalValues, isDraftMode);
+      localStorage.removeItem("nx-listing-draft");
+      if (!isDraftMode) {
+        toast.success("Listing posted successfully!");
+        setStep("success");
+      } else {
+        toast.success("Draft saved successfully!");
+        onOpenChange(false);
+      }
+    } catch(err: any) {
+      const msg = err?.message || "An unexpected error occurred.";
+      toast.error(msg);
       setSubmitError(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (submitting) return;
-    onOpenChange(false);
-    setStep("details");
-    setErrors({});
-    setSubmitError(null);
-    if (!isEdit) setValues(emptyListingForm);
-  };
-
-  const goNext = () => {
-    if (step === "details") {
-      if (validateDetails()) setStep("images");
-    }
-  };
-
-  const stepLabel =
-    step === "details" ? "1 of 2 — Details" : "2 of 2 — Photos";
-
-  const imageCount = values.images.length;
-  const slotsLeft = MAX_IMAGES - imageCount;
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent
-        className="flex max-h-[88vh] w-full max-w-xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        {/* ── HEADER ── */}
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-          <div>
-            <DialogTitle className="font-display text-lg font-black leading-none">
-              {isEdit ? "Edit Listing" : "Post New Item"}
-            </DialogTitle>
-            <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
-              {stepLabel}
-            </p>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl w-full h-[90vh] rounded-[2rem] overflow-hidden p-0 bg-background border-border flex flex-col">
+        <DialogTitle className="sr-only font-black">Post Listing Wizard</DialogTitle>
+
+        {/* ── Progress indicator ── */}
+        <div className="p-5 border-b border-border shrink-0">
+          <div className="flex items-center justify-between text-xs font-black text-muted-foreground uppercase tracking-wider mb-2">
+            <span>Post New Campus Listing</span>
+            <span>Step {["category", "details", "media", "success"].indexOf(step) + 1} of 4</span>
           </div>
-          {/* Step pills */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`h-2 w-8 rounded-full transition-colors ${step === "details" ? "bg-foreground" : "bg-success"}`}
-              />
-              <span
-                className={`h-2 w-8 rounded-full transition-colors ${step === "images" ? "bg-foreground" : "bg-border"}`}
-              />
-            </div>
+          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${((["category", "details", "media", "success"].indexOf(step) + 1) / 4) * 100}%` }}
+            />
           </div>
         </div>
 
-        {/* ── BODY (scrollable) ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-
-          {/* ─ Step 1: Details ─ */}
-          {step === "details" && (
+        {/* ── Form Step Body ── */}
+        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          
+          {/* STEP 1: CATEGORY & SUBCATEGORY */}
+          {step === "category" && (
             <div className="space-y-4">
-              <Field label="Title" required error={errors.title}>
-                <input
-                  value={values.title}
-                  onChange={(e) => set("title", e.target.value)}
-                  placeholder="e.g. MacBook Air M2, Blue Campus Bicycle"
-                  className={inputClass(!!errors.title)}
-                />
-              </Field>
-
-              <div className="grid grid-cols-3 gap-3">
-                <Field
-                  label="Price (₹)"
-                  required
-                  error={errors.price}
-                  hint="Enter 0 for free"
-                >
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
-                      ₹
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={values.price}
-                      onChange={(e) => set("price", e.target.value)}
-                      placeholder="0"
-                      className={`${inputClass(!!errors.price)} pl-7`}
-                    />
-                  </div>
-                </Field>
-
-                <Field label="Original Price (₹)" hint="Original retail price" error={errors.originalPrice}>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
-                      ₹
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={values.originalPrice || ""}
-                      onChange={(e) => set("originalPrice", e.target.value)}
-                      placeholder="0"
-                      className={`${inputClass(!!errors.originalPrice)} pl-7`}
-                    />
-                  </div>
-                </Field>
-
-                <Field label="Condition" required error={errors.condition}>
-                  <Select
-                    value={values.condition}
-                    onValueChange={(v) => set("condition", v as any)}
-                  >
-                    <SelectTrigger className={`${selectClass()} ${errors.condition ? "border-destructive bg-destructive/5" : ""}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MARKETPLACE_CONDITIONS.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+              <div>
+                <h3 className="text-xl font-black text-foreground">Choose Category</h3>
+                <p className="text-xs text-muted-foreground">Select a category and subcategory that best describes your listing.</p>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground -mt-2 ml-1">
-                <input
-                  type="checkbox"
-                  checked={values.isNegotiable}
-                  onChange={(e) => set("isNegotiable", e.target.checked)}
-                  className="rounded border-border accent-primary"
-                />
-                Price is negotiable
-              </label>
-
-              <Field label="Category" required error={errors.category}>
-                <Select
-                  value={values.category}
-                  onValueChange={(v) => set("category", v as any)}
-                >
-                  <SelectTrigger className={`${selectClass()} ${errors.category ? "border-destructive bg-destructive/5" : ""}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MARKETPLACE_CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <Field
-                label="Description"
-                required
-                error={errors.description}
-                hint="Include age, brand, specs, reason for selling"
-              >
-                <div className="relative">
-                  <textarea
-                    value={values.description}
-                    onChange={(e) => set("description", e.target.value)}
-                    placeholder="Describe your item — condition, what's included, why selling..."
-                    rows={4}
-                    className={`${inputClass(!!errors.description)} resize-none`}
-                  />
-                  <span className="absolute bottom-2 right-3 text-[10px] font-semibold text-muted-foreground">
-                    {values.description.length} chars
-                  </span>
-                </div>
-              </Field>
-
-              <Field label="Specifications / Attributes" hint="e.g. Brand: Apple, RAM: 16GB" error={errors.specifications}>
-                <input
-                  value={values.specifications || ""}
-                  onChange={(e) => set("specifications", e.target.value)}
-                  placeholder="e.g. Brand: Apple, RAM: 16GB"
-                  className={inputClass(!!errors.specifications)}
-                />
-              </Field>
-
-              <Field label="Pickup Location" required error={errors.pickupArea}>
-                <div className="relative">
-                  <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value={values.pickupArea}
-                    onChange={(e) => set("pickupArea", e.target.value)}
-                    placeholder="e.g. Hostel 5 Gate, CSE Dept Lobby..."
-                    className={`${inputClass(!!errors.pickupArea)} pl-9`}
-                  />
-                </div>
-              </Field>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Campus / Hostel">
-                  <input
-                    value={values.campus || ""}
-                    onChange={(e) => set("campus", e.target.value)}
-                    placeholder="e.g. North Campus, Hostel 3"
-                    className={inputClass(false)}
-                  />
-                </Field>
-
-                <Field label="Specific Pickup Point">
-                  <input
-                    value={values.pickup || ""}
-                    onChange={(e) => set("pickup", e.target.value)}
-                    placeholder="e.g. Gate 1, Lobby desk"
-                    className={inputClass(false)}
-                  />
-                </Field>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {CATEGORIES_WIZARD.map((cat) => {
+                  const Icon = cat.icon;
+                  const isSelected = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        setVal("category", cat.id as any);
+                        setSelectedSubcategory(""); // Reset subcategory when category changes
+                      }}
+                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all text-center gap-2 group ${
+                        isSelected
+                          ? "border-primary bg-primary/5 text-primary shadow-glow"
+                          : "border-border bg-card text-foreground hover:border-primary/40 hover:-translate-y-0.5"
+                      }`}
+                    >
+                      <span className="p-3 rounded-xl bg-secondary text-primary transition-transform group-hover:scale-110">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="text-xs font-black">{cat.name}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <Field label="Tags" hint="Up to 5, comma separated" error={errors.tags}>
-                <div className="relative">
-                  <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value={values.tags}
-                    onChange={(e) => set("tags", e.target.value)}
-                    placeholder="e.g. laptop, apple, m2"
-                    className={`${inputClass(!!errors.tags)} pl-9`}
-                  />
+              {selectedCategory && (
+                <div className="mt-6 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-border/40 pt-4">
+                  <label className="text-xs font-black uppercase text-muted-foreground">Select Subcategory</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(SUBCATEGORIES[selectedCategory] || []).map((sub) => {
+                      const isSubSelected = selectedSubcategory === sub;
+                      return (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => setSelectedSubcategory(sub)}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            isSubSelected
+                              ? "bg-primary text-primary-foreground border-primary shadow-soft"
+                              : "bg-card text-foreground border-border hover:bg-secondary/40"
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </Field>
+              )}
             </div>
           )}
 
-          {/* ─ Step 2: Images ─ */}
-          {step === "images" && (
+          {/* STEP 2: DETAILS & PRICING & LOCATION */}
+          {step === "details" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">
-                  {imageCount === MAX_IMAGES ? "12/12 uploaded" : `${imageCount}/${MAX_IMAGES} photos`}
-                  {imageCount < MAX_IMAGES && (
-                    <span className="ml-1 font-normal text-muted-foreground">
-                      ({slotsLeft} slot{slotsLeft !== 1 ? "s" : ""} remaining)
-                    </span>
-                  )}
-                  {imageCount === 0 && (
-                    <span className="ml-1 font-normal text-muted-foreground">
-                      — at least 1 required
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">First photo = cover · Drag to reorder</p>
+              <div>
+                <h3 className="text-xl font-black text-foreground">Listing Details & Pricing</h3>
+                <p className="text-xs text-muted-foreground">Provide core specifications, price parameters, and pickup point details.</p>
               </div>
 
-              {errors.images && (
-                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{errors.images}</span>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-xs font-bold text-muted-foreground">Listing Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. HC Verma Physics Vol 1 & 2"
+                    value={values.title}
+                    onChange={(e) => setVal("title", e.target.value)}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none ${errors.title ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                  />
+                  {errors.title && <p className="text-[10px] font-bold text-destructive">{errors.title}</p>}
                 </div>
-              )}
 
-              {/* Drop zone (shown when no images OR always available at bottom) */}
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-xs font-bold text-muted-foreground">Description</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe usage period, scratches, highlights, pages missing, or features..."
+                    value={values.description}
+                    onChange={(e) => setVal("description", e.target.value)}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none resize-none ${errors.description ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                  />
+                  {errors.description && <p className="text-[10px] font-bold text-destructive">{errors.description}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Condition</label>
+                  <select
+                    value={values.condition}
+                    onChange={(e) => setVal("condition", e.target.value as any)}
+                    className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold outline-none"
+                  >
+                    {MARKETPLACE_CONDITIONS.map(cond => <option key={cond}>{cond}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground font-black">Selling Price (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 500"
+                    value={values.price}
+                    onChange={(e) => setVal("price", e.target.value)}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none ${errors.price ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">Original Purchase Price (₹) - Optional</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1200"
+                    value={values.originalPrice}
+                    onChange={(e) => setVal("originalPrice", e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-card/45 sm:col-span-1">
+                  <div>
+                    <p className="text-xs font-black">Price is Negotiable</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 font-bold">Accept offers below expected price.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={values.isNegotiable}
+                    onChange={(e) => setVal("isNegotiable", e.target.checked)}
+                    className="rounded border-border text-primary h-4 w-4"
+                  />
+                </div>
+
+                <div className="space-y-1.5 sm:col-span-2 border-t border-border/40 pt-4">
+                  <label className="text-xs font-bold text-muted-foreground">Pickup Landmark / Spot</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Library front gate, Hostel 5 Block A lobby"
+                    value={values.pickupArea}
+                    onChange={(e) => setVal("pickupArea", e.target.value)}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none ${errors.pickupArea ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                  />
+                  {errors.pickupArea && <p className="text-[10px] font-bold text-destructive">{errors.pickupArea}</p>}
+                </div>
+
+                {/* Category-Specific fields */}
+                {selectedCategory === "Electronics" && (
+                  <div className="grid grid-cols-2 gap-3 sm:col-span-2 border-t border-border/40 pt-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground">Brand</label>
+                      <input type="text" placeholder="Apple, Lenovo, Sony" value={specs.Brand || ""} onChange={(e) => setSpecs({ ...specs, Brand: e.target.value })} className="w-full rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground">Model</label>
+                      <input type="text" placeholder="e.g. WH-1000XM4" value={specs.Model || ""} onChange={(e) => setSpecs({ ...specs, Model: e.target.value })} className="w-full rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold outline-none" />
+                    </div>
+                  </div>
+                )}
+
+                {selectedCategory === "Books" && (
+                  <div className="grid grid-cols-2 gap-3 sm:col-span-2 border-t border-border/40 pt-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground">Author</label>
+                      <input type="text" placeholder="e.g. HC Verma" value={specs.Author || ""} onChange={(e) => setSpecs({ ...specs, Author: e.target.value })} className="w-full rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground">Semester / Year</label>
+                      <input type="text" placeholder="e.g. 3rd Semester" value={specs.Semester || ""} onChange={(e) => setSpecs({ ...specs, Semester: e.target.value })} className="w-full rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold outline-none" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: PHOTOS UPLOAD */}
+          {step === "media" && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-black text-foreground">Photos</h3>
+                <p className="text-xs text-muted-foreground">Add up to 10 photos of your product from multiple angles.</p>
+              </div>
+
               <div
-                ref={dropZoneRef}
-                onDragEnter={imageCount < MAX_IMAGES ? handleDragEnter : undefined}
-                onDragLeave={imageCount < MAX_IMAGES ? handleDragLeave : undefined}
-                onDragOver={imageCount < MAX_IMAGES ? handleDragOver : undefined}
-                onDrop={imageCount < MAX_IMAGES ? handleDrop : undefined}
-                onClick={() => imageCount < MAX_IMAGES && !compressing && fileRef.current?.click()}
-                className={`flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-all ${
-                  imageCount >= MAX_IMAGES
-                    ? "border-border bg-secondary/30 cursor-not-allowed opacity-60"
-                    : isDragging
-                      ? "border-primary bg-primary/10 shadow-soft cursor-pointer"
-                      : "border-border hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
-                } ${imageCount === 0 ? "py-12" : "py-6"}`}
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-2xl p-8 text-center bg-card/40 hover:bg-secondary/40 cursor-pointer transition-colors"
               >
-                <div className={`grid place-items-center rounded-full transition-colors ${
-                  isDragging ? "bg-primary/20" : "bg-primary/10"
-                } ${imageCount === 0 ? "h-12 w-12" : "h-9 w-9"}`}>
-                  {compressing ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  ) : (
-                    <Upload className={`text-primary ${imageCount === 0 ? "h-6 w-6" : "h-4 w-4"}`} />
-                  )}
-                </div>
-                <div className="text-center">
-                  {compressing ? (
-                    <p className="text-sm font-bold text-primary">Compressing images...</p>
-                  ) : isDragging ? (
-                    <p className="text-sm font-bold text-primary">Drop images here</p>
-                  ) : (
-                    <>
-                      <p className="font-bold">
-                        {imageCount === MAX_IMAGES 
-                          ? "Upload limit reached" 
-                          : imageCount === 0 
-                            ? "Click or drag & drop to upload" 
-                            : "Add more photos"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {imageCount === MAX_IMAGES
-                          ? "Remove an image to add another"
-                          : `${slotsLeft} slot${slotsLeft !== 1 ? "s" : ""} left · JPG, PNG, WebP · Max 5 MB each`}
-                      </p>
-                    </>
-                  )}
-                </div>
+                <Upload className="h-8 w-8 text-primary mx-auto mb-2" />
+                <p className="text-xs font-black">Click or drag photos here to upload</p>
+                <p className="text-[10px] text-muted-foreground mt-1">JPEG, PNG, WEBP files up to 5MB</p>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFiles(e.target.files)}
+                />
               </div>
 
-              {/* 3-column grid with drag-to-reorder */}
-              {imageCount > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {values.images.map((img, idx) => (
-                    <div
-                      key={idx}
-                      draggable
-                      onDragStart={() => handleThumbDragStart(idx)}
-                      onDragOver={(e) => handleThumbDragOver(e, idx)}
-                      onDrop={() => handleThumbDrop(idx)}
-                      onDragEnd={handleThumbDragEnd}
-                      className={`group relative aspect-square overflow-hidden rounded-xl border-2 bg-muted transition-all cursor-grab active:cursor-grabbing ${
-                        dragOverIndex === idx && dragSourceIndex !== idx
-                          ? "border-primary shadow-soft scale-[1.02]"
-                          : dragSourceIndex === idx
-                            ? "border-border opacity-50"
-                            : "border-border"
-                      }`}
-                    >
+              {(values.images || []).length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                  {(values.images || []).map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border group bg-secondary">
                       <img
-                        src={getPreviewUrl(img)}
+                        src={displayImageUrls[i] || "/placeholder.jpg"}
                         alt=""
                         className="h-full w-full object-cover"
-                        draggable={false}
                       />
-
-                      {/* Cover badge */}
-                      {idx === 0 && (
-                        <span className="absolute left-1 top-1 rounded-md bg-foreground/80 px-1.5 py-0.5 text-[9px] font-black text-background">
+                      {i === 0 && (
+                        <span className="absolute top-1.5 left-1.5 bg-primary text-primary-foreground text-[8px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded">
                           Cover
                         </span>
                       )}
-
-                      {/* Make Cover Button (only for idx > 0) */}
-                      {idx > 0 && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); moveImage(idx, 0); }}
-                          className="absolute right-1 top-1 rounded-md bg-foreground/80 px-1.5 py-0.5 text-[9px] font-black text-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground"
-                        >
-                          Make Cover
-                        </button>
-                      )}
-
-                      {/* Drag handle */}
-                      <div className="absolute left-1 bottom-1 grid h-5 w-5 place-items-center rounded bg-foreground/60 opacity-0 transition-opacity group-hover:opacity-100">
-                        <GripVertical className="h-3 w-3 text-background" />
-                      </div>
-
-                      {/* Hover actions */}
-                      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-foreground/50 opacity-0 transition-opacity group-hover:opacity-100">
-                        {idx > 0 && (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(idx, idx - 1); }}
-                            className="grid h-6 w-6 place-items-center rounded-full bg-paper/90 transition hover:bg-paper"
-                          >
-                            <ChevronLeft className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
-                          className="grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground transition hover:bg-destructive/80"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                        {idx < values.images.length - 1 && (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(idx, idx + 1); }}
-                            className="grid h-6 w-6 place-items-center rounded-full bg-paper/90 transition hover:bg-paper"
-                          >
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* File size badge */}
-                      {img instanceof File && (
-                        <span className="absolute right-1 bottom-1 rounded bg-foreground/60 px-1 py-0.5 text-[8px] font-bold text-background opacity-0 transition-opacity group-hover:opacity-100">
-                          {(img.size / 1024).toFixed(0)} KB
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(i);
+                        }}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
-
-                  {/* Add more slot */}
-                  {slotsLeft > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => fileRef.current?.click()}
-                      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border transition-colors hover:border-primary/50 hover:bg-primary/5"
-                    >
-                      <Plus className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[10px] font-semibold text-muted-foreground">{slotsLeft} left</span>
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Progress bar */}
-              {imageCount > 0 && (
-                <div className="flex items-center gap-2.5">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{
-                        width: `${(imageCount / MAX_IMAGES) * 100}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="shrink-0 text-xs font-semibold text-muted-foreground">
-                    {slotsLeft} slot{slotsLeft !== 1 ? "s" : ""} left
-                  </span>
-                </div>
-              )}
-
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/avif"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  handleFiles(e.target.files);
-                  // Reset so selecting the same file works
-                  e.target.value = "";
-                }}
-              />
-
-              {imageCount === 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2.5">
-                  <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    Good photos get 3× more responses. Add photos from multiple
-                    angles.
-                  </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Submit error */}
-          {submitError && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{submitError}</span>
+          {/* STEP 4: SUCCESS */}
+          {step === "success" && (
+            <div className="flex flex-col items-center justify-center text-center py-10 space-y-4 animate-in fade-in zoom-in duration-300">
+              <div className="h-16 w-16 rounded-full bg-success/15 flex items-center justify-center text-success animate-bounce">
+                <Check className="h-8 w-8" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-foreground">Listing Posted Successfully!</h3>
+                <p className="text-xs text-muted-foreground mt-1 font-bold">Your item is now live and discoverable across your campus.</p>
+              </div>
+              <div className="flex flex-wrap gap-2.5 pt-4 justify-center">
+                <button type="button" onClick={() => onOpenChange(false)} className="rounded-xl border border-border bg-card px-5 py-2.5 text-xs font-black">
+                  Close Panel
+                </button>
+                <button type="button" onClick={() => setStep("category")} className="rounded-xl bg-primary text-primary-foreground px-5 py-2.5 text-xs font-black shadow-soft">
+                  Post Another Item
+                </button>
+              </div>
             </div>
           )}
+
         </div>
 
-        {/* ── FOOTER ── */}
-        <div className="shrink-0 border-t border-border px-5 py-4">
-          <div className="flex items-center gap-3">
-            {step === "images" && (
-              <button
-                type="button"
-                onClick={() => setStep("details")}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-secondary"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Back
-              </button>
-            )}
+        {/* ── Wizard Navigation Footer ── */}
+        {step !== "success" && (
+          <div className="shrink-0 border-t border-border p-4 bg-card/30 flex justify-between items-center">
+            <div>
+              {step !== "category" && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="flex items-center gap-1 text-xs font-black text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Back</span>
+                </button>
+              )}
+            </div>
 
-            <div className="flex flex-1 justify-end gap-2.5">
+            <div className="flex gap-2">
               <button
                 type="button"
-                disabled={submitting || compressing || isDraftDisabled}
-                onClick={() => handleSubmit(true)}
-                className="rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handlePublish(true)}
+                className="rounded-xl border border-border bg-card/60 px-4 py-2 text-xs font-black text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
               >
                 Save Draft
               </button>
 
-              {step === "details" ? (
+              {step === "media" ? (
                 <button
                   type="button"
-                  onClick={goNext}
-                  className="flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-black text-background shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow"
+                  disabled={submitting}
+                  onClick={() => handlePublish(false)}
+                  className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-xs font-black shadow-soft hover:shadow-glow flex items-center gap-1.5"
                 >
-                  Add Photos
-                  <ChevronRight className="h-4 w-4" />
+                  {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  <span>Post</span>
                 </button>
               ) : (
                 <button
                   type="button"
-                  disabled={submitting || compressing || isPublishDisabled}
-                  onClick={() => handleSubmit(false)}
-                  className="flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-black text-background shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleNext}
+                  className="rounded-xl bg-foreground text-background px-6 py-2.5 text-xs font-black shadow-soft hover:bg-foreground/95 flex items-center gap-1"
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {isEdit ? "Updating..." : "Publishing..."}
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" />
-                      {isEdit ? "Update" : "Publish"}
-                    </>
-                  )}
+                  <span>Continue</span>
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               )}
             </div>
           </div>
-        </div>
+        )}
+
       </DialogContent>
     </Dialog>
   );
-}
-
-/* ── small helpers ── */
-function Field({
-  label,
-  required,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-1">
-        <label className="text-xs font-black uppercase tracking-wide text-foreground/70">
-          {label}
-        </label>
-        {required && <span className="text-xs text-destructive">*</span>}
-      </div>
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {children}
-      {error && (
-        <p className="text-xs font-semibold text-destructive">{error}</p>
-      )}
-    </div>
-  );
-}
-
-function inputClass(hasError: boolean) {
-  return `w-full rounded-xl border ${hasError ? "border-destructive bg-destructive/5" : "border-border bg-card"} px-3 py-2.5 text-sm font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:shadow-soft`;
-}
-
-function selectClass() {
-  return "h-10 w-full rounded-xl border border-border bg-card text-sm font-semibold focus:border-primary";
 }

@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 
 const navItems = [
   { label: "Marketplace", to: "/marketplace", icon: ShoppingBag },
@@ -129,65 +130,7 @@ export function SiteNav() {
         {/* Right: auth + hamburger */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-foreground/10 bg-paper px-2.5 py-1.5 text-sm font-black text-foreground shadow-soft transition hover:-translate-y-0.5"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarUrl} alt="" />
-                    <AvatarFallback className="bg-primary text-xs font-black text-primary-foreground">
-                      {initials || "NS"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-24 truncate sm:inline">{firstName}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-xl p-2">
-                <div className="flex items-center gap-3 rounded-lg bg-secondary/70 p-3">
-                  <Avatar className="h-11 w-11">
-                    <AvatarImage src={avatarUrl} alt="" />
-                    <AvatarFallback className="bg-primary text-xs font-black text-primary-foreground">
-                      {initials || "NS"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-foreground">{displayName}</p>
-                    <p className="truncate text-xs font-bold text-muted-foreground">{user?.email}</p>
-                    <p className="truncate text-xs font-bold text-muted-foreground">{collegeName}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
-                    window.sessionStorage.setItem("nexora-settings-section", "profile");
-                    void navigate({ to: AUTH_ROUTES.settings });
-                  }}
-                >
-                  <UserRound className="h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => {
-                    window.sessionStorage.setItem("nexora-settings-section", "account");
-                    void navigate({ to: AUTH_ROUTES.settings });
-                  }}
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => void handleLogout()}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ProfileDropdown />
           ) : (
             <div className="flex items-center gap-2">
               <button

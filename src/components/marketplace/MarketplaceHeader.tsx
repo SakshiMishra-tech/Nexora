@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationSelector } from "./LocationSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { AUTH_ROUTES } from "@/lib/auth";
+import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import type { CampusLocation } from "@/types/marketplace-enhanced";
 
 const TRENDING = ["ThinkPad laptop", "Bicycle", "First year books", "Study lamp", "Gaming controller"];
@@ -237,20 +238,9 @@ export function MarketplaceHeader({
           </button>
 
           {/* Profile */}
-          <div ref={profileRef} className="relative shrink-0">
+          <div className="relative shrink-0">
             {user ? (
-              <button
-                type="button"
-                onClick={() => setShowProfile(v => !v)}
-                className="flex h-9 items-center gap-1.5 rounded-full border border-border bg-card pl-0.5 pr-2 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={avatarUrl} />
-                  <AvatarFallback className="bg-primary text-xs font-black text-primary-foreground">{initials}</AvatarFallback>
-                </Avatar>
-                <span className="hidden max-w-[72px] truncate text-sm font-bold sm:inline">{displayName.split(" ")[0]}</span>
-                <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
-              </button>
+              <ProfileDropdown />
             ) : (
               <button
                 type="button"
@@ -260,39 +250,6 @@ export function MarketplaceHeader({
                 <User className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Login</span>
               </button>
-            )}
-
-            {/* Dropdown */}
-            {showProfile && user && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-card shadow-glow">
-                {/* User info */}
-                <div className="border-b border-border px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarImage src={avatarUrl} />
-                      <AvatarFallback className="bg-primary text-sm font-black text-primary-foreground">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black">{displayName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Menu items */}
-                <div className="p-1.5">
-                  <DropItem icon={<User className="h-4 w-4" />} label="My Profile"    onClick={() => { navigate({ to: AUTH_ROUTES.completeProfile }); setShowProfile(false); }} />
-                  <DropItem icon={<ShoppingBag className="h-4 w-4" />} label="My Listings"  onClick={() => setShowProfile(false)} />
-                  <DropItem icon={<Heart className="h-4 w-4" />}       label="Saved Items"   onClick={() => setShowProfile(false)} />
-                  <DropItem icon={<MessageCircle className="h-4 w-4" />} label="Chats" badge={notifCount > 0 ? String(notifCount) : undefined} onClick={() => setShowProfile(false)} />
-                  <DropItem icon={<Bell className="h-4 w-4" />}        label="Orders"        onClick={() => setShowProfile(false)} />
-
-                  <div className="my-1 border-t border-border" />
-
-                  <DropItem icon={<Settings className="h-4 w-4" />} label="Settings" onClick={() => { navigate({ to: AUTH_ROUTES.settings }); setShowProfile(false); }} />
-                  <DropItem icon={<LogOut className="h-4 w-4" />}   label="Logout"   onClick={handleLogout} danger />
-                </div>
-              </div>
             )}
           </div>
         </div>

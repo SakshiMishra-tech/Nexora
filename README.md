@@ -104,7 +104,7 @@ A detailed explanation of the project's directory layout and file relationships 
    npm run dev
    ```
 4. **Open your browser:**
-   Navigate to `http://localhost:5173`.
+   Navigate to `http://localhost:8080`.
 
 ---
 

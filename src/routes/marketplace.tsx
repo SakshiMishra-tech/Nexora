@@ -38,6 +38,7 @@ import { ListingDetail } from "@/components/marketplace/ListingDetail";
 import { SellerDashboard } from "@/components/marketplace/SellerDashboard";
 import { SellItemForm } from "@/components/marketplace/SellItemForm";
 import { MarketplaceChat } from "@/components/marketplace/MarketplaceChat";
+import { CategoryNavigation } from "@/components/marketplace/CategoryNavigation";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { initialFilters, listingToFormValues, type MarketplaceListing } from "@/lib/marketplace";
 import type { MarketplaceFilters } from "@/lib/marketplace";
@@ -109,6 +110,7 @@ function MarketplaceRoute() {
     error: marketplaceError,
     loadMore,
     hasMore,
+    currentUserId,
   } = useMarketplace(search, navigate);
 
   const [bootLoading, setBootLoading] = useState(true);
@@ -171,6 +173,18 @@ function MarketplaceRoute() {
             : [...f.category, id as any]
         };
       });
+    },
+    [setFilters],
+  );
+
+  const handleCategoryNavigationSelect = useCallback(
+    (dbCats: string[], query?: string) => {
+      setFilters((f) => ({
+        ...f,
+        category: dbCats as any[],
+        query: query ?? ""
+      }));
+      setSearchQuery(query ?? "");
     },
     [setFilters],
   );
@@ -447,41 +461,11 @@ function MarketplaceRoute() {
 
           {/* ── Categories ── */}
           {(activeView === "browse" || activeView === "saved") && (
-            <div className="mb-6 relative">
-              <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-              <div className="flex gap-2 overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {categoriesLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-10 w-32 shrink-0 animate-pulse rounded-full border border-border bg-card shadow-sm"
-                    />
-                  ))
-                ) : (
-                  categoryList.map((cat) => {
-                    const Icon = ICON_MAP[cat] ?? Package;
-                    const active = (cat === "All" && filters.category.length === 0) || (cat !== "All" && filters.category.includes(cat as any));
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => handleCategorySelect(cat)}
-                        className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-black shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${
-                          active
-                            ? "border-foreground bg-foreground text-background shadow-soft"
-                            : "border-border bg-card text-muted-foreground hover:border-primary/35 hover:text-foreground"
-                        }`}
-                      >
-                        <span className={`grid h-6 w-6 place-items-center rounded-full ${active ? "bg-background/15" : "bg-secondary text-primary"}`}>
-                          <Icon className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="whitespace-nowrap">{cat}</span>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <CategoryNavigation
+              activeCategories={filters.category}
+              activeQuery={searchQuery}
+              onSelectCategory={handleCategoryNavigationSelect}
+            />
           )}
 
           {/* Active Filter Chips */}
@@ -561,19 +545,17 @@ function MarketplaceRoute() {
           )}
 
           {/* ── Title row ── */}
-          {activeView !== "chats" && (
+          {activeView !== "chats" && activeView !== "seller" && (
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-display text-2xl font-black">
-                  {activeView === "seller"
-                    ? "My Dashboard"
-                    : activeView === "saved"
-                      ? "Saved Items"
-                      : filters.category.length === 0
-                        ? "All Listings"
-                        : filters.category.length === 1 
-                          ? filters.category[0] 
-                          : `${filters.category.length} Categories`}
+                  {activeView === "saved"
+                    ? "Saved Items"
+                    : filters.category.length === 0
+                      ? "All Listings"
+                      : filters.category.length === 1 
+                        ? filters.category[0] 
+                        : `${filters.category.length} Categories`}
                 </h2>
                 <p className="text-sm font-semibold text-muted-foreground">
                   {loading
@@ -592,6 +574,7 @@ function MarketplaceRoute() {
               onBackToBrowse={() => { setActiveView("browse"); setActiveChatId(null); }}
               listings={listings}
               initialChatId={activeChatId}
+              currentUserId={currentUserId}
             />
           ) : activeView === "seller" ? (
             <SellerDashboard
@@ -766,18 +749,20 @@ function MarketplaceRoute() {
         )}
 
         {/* ── Floating Action Button — Sell ── */}
-        <button
-          type="button"
-          onClick={() => {
-            setEditingId(undefined);
-            setSellOpen(true);
-          }}
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center bg-foreground text-background shadow-glow transition-all hover:-translate-y-1 hover:shadow-soft md:h-auto md:w-auto md:gap-2 md:px-5 md:py-3"
-          aria-label="Sell an item"
-        >
-          <Plus className="h-6 w-6 md:h-4 md:w-4" />
-          <span className="hidden text-sm font-black md:inline">Sell Item</span>
-        </button>
+        {activeView !== "seller" && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(undefined);
+              setSellOpen(true);
+            }}
+            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center bg-foreground text-background shadow-glow transition-all hover:-translate-y-1 hover:shadow-soft md:h-auto md:w-auto md:gap-2 md:px-5 md:py-3"
+            aria-label="Sell an item"
+          >
+            <Plus className="h-6 w-6 md:h-4 md:w-4" />
+            <span className="hidden text-sm font-black md:inline">Sell Item</span>
+          </button>
+        )}
 
         {/* ── Filter drawer ── */}
         <FilterDrawer
