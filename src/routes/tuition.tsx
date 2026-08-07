@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BookOpen, Clock, GraduationCap, Search, Sparkles, Star, Users } from "lucide-react";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
-import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/tuition")({
   head: () => ({ meta: [{ title: "Nexora - Tuition" }] }),
@@ -25,7 +24,6 @@ function Tuition() {
   return (
     <ModuleAccessBoundary moduleId="tuition">
       <main className="min-h-screen bg-background text-foreground">
-        <SiteNav />
         <section className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
           <div className="commons-wall mb-8 border border-border p-6 shadow-soft">

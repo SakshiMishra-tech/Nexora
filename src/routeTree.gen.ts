@@ -27,6 +27,7 @@ import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/campus-spaces'
+import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -121,6 +122,11 @@ const OnboardingCampusSpacesRoute = OnboardingCampusSpacesRouteImport.update({
   path: '/onboarding/campus-spaces',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -145,7 +151,7 @@ export interface FileRoutesByFullPath {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
 }
 export interface FileRoutesByTo {
@@ -168,7 +175,7 @@ export interface FileRoutesByTo {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
 }
 export interface FileRoutesById {
@@ -192,7 +200,7 @@ export interface FileRoutesById {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
 }
 export interface FileRouteTypes {
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/marketplace/backup'
     | '/onboarding/campus-spaces'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/marketplace/backup'
     | '/onboarding/campus-spaces'
   id:
     | '__root__'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/marketplace/backup'
     | '/onboarding/campus-spaces'
   fileRoutesById: FileRoutesById
 }
@@ -287,7 +299,7 @@ export interface RootRouteChildren {
   DatingRoute: typeof DatingRoute
   EventsRoute: typeof EventsRoute
   LostFoundRoute: typeof LostFoundRoute
-  MarketplaceRoute: typeof MarketplaceRoute
+  MarketplaceRoute: typeof MarketplaceRouteWithChildren
   MarketplacePremiumRoute: typeof MarketplacePremiumRoute
   NotesRoute: typeof NotesRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingCampusSpacesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/backup': {
+      id: '/marketplace/backup'
+      path: '/backup'
+      fullPath: '/marketplace/backup'
+      preLoaderRoute: typeof MarketplaceBackupRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/signup'
@@ -466,6 +485,18 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface MarketplaceRouteChildren {
+  MarketplaceBackupRoute: typeof MarketplaceBackupRoute
+}
+
+const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceBackupRoute: MarketplaceBackupRoute,
+}
+
+const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
+  MarketplaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
@@ -474,7 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   DatingRoute: DatingRoute,
   EventsRoute: EventsRoute,
   LostFoundRoute: LostFoundRoute,
-  MarketplaceRoute: MarketplaceRoute,
+  MarketplaceRoute: MarketplaceRouteWithChildren,
   MarketplacePremiumRoute: MarketplacePremiumRoute,
   NotesRoute: NotesRoute,
   PrivacyRoute: PrivacyRoute,

@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
-import { SiteNav } from "@/components/SiteNav";
 import student1 from "@/assets/student-1.jpg";
 import student2 from "@/assets/student-2.jpg";
 import student3 from "@/assets/student-3.jpg";
@@ -991,7 +990,6 @@ function matchesDistanceFilter(distance: string, filter: string) {
 function CampusPageShell({ label, title, subtitle, icon: Icon, children }: { label: string; title: string; subtitle: string; icon: typeof Heart; children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <SiteNav />
       <section className="mx-auto max-w-7xl px-4 py-6">
         <div className="commons-wall mb-5 border border-border p-5 shadow-soft">
           <span className="inline-flex items-center gap-2 bg-destructive/10 px-3 py-1 text-xs font-black uppercase text-destructive"><Icon className="h-4 w-4" />{label}</span>

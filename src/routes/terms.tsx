@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({ meta: [{ title: "Nexora - Terms" }] }),
@@ -9,7 +8,6 @@ export const Route = createFileRoute("/terms")({
 function TermsPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <SiteNav />
       <section className="mx-auto max-w-3xl px-4 py-12">
         <p className="text-sm font-black uppercase text-primary">Nexora</p>
         <h1 className="mt-2 font-display text-4xl font-black">Terms</h1>

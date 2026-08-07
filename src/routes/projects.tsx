@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Code2, Plus, Users, Wrench } from "lucide-react";
 import { ModuleOnboardingPrompt } from "@/components/ModuleOnboardingPrompt";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
-import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({ meta: [{ title: "Nexora - Projects" }] }),
@@ -59,7 +58,6 @@ function Projects() {
 function CampusPageShell({ label, title, subtitle, icon: Icon, children }: { label: string; title: string; subtitle: string; icon: typeof Wrench; children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <SiteNav />
       <section className="mx-auto max-w-7xl px-4 py-6">
         <div className="commons-wall mb-5 border border-border p-5 shadow-soft">
           <span className="inline-flex items-center gap-2 bg-secondary px-3 py-1 text-xs font-black uppercase text-primary"><Icon className="h-4 w-4" />{label}</span>

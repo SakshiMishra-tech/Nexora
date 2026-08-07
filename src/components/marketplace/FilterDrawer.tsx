@@ -99,7 +99,7 @@ export function FilterDrawer({ open, onOpenChange, filters, onFilterChange }: Fi
     >
       <div className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" />
 
-      <aside className="relative flex h-full w-full flex-col overflow-hidden border-l border-border bg-paper shadow-glow animate-in slide-in-from-right duration-300 sm:max-w-[460px]">
+      <aside className="relative flex h-full w-full flex-col overflow-hidden border-l border-border bg-paper shadow-glow animate-in slide-in-from-right duration-300 sm:max-w-[340px]">
         <header className="border-b border-border bg-card px-5 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>

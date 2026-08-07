@@ -19,20 +19,29 @@ import {
   Car,
   GraduationCap,
   CalendarDays,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  SlidersHorizontal,
+  Sun,
+  Moon,
+  Monitor,
+  UserCircle,
   Lock,
+  Link2,
+  Eye,
+  EyeOff,
+  Check,
+  X,
+  ChevronRight,
+  Sparkles,
+  Globe,
+  Phone,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { NexoraLogo } from "@/components/brand/NexoraLogo";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import { AUTH_ROUTES } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { CAMPUS_MODULES, type CampusModuleId } from "@/lib/modules";
@@ -44,13 +53,48 @@ import {
 } from "@/services/user-settings.service";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Nexora - Account & Campus Settings" }] }),
+  head: () => ({ meta: [{ title: "Nexora – Settings" }] }),
   component: SettingsRoute,
 });
 
-type SettingsSection = "spaces" | "location" | "notifications" | "security";
+type NavSection =
+  | "spaces"
+  | "location"
+  | "notifications"
+  | "appearance"
+  | "account"
+  | "security"
+  | "connected";
 
-// Popular College Suggestions
+interface NavItem {
+  id: NavSection;
+  label: string;
+  icon: React.ElementType;
+  badge?: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { id: "spaces", label: "Campus Spaces", icon: Layers },
+  { id: "location", label: "Location & Campus", icon: MapPin },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "appearance", label: "Appearance", icon: Sun },
+  { id: "account", label: "Account", icon: UserCircle },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "connected", label: "Connected Accounts", icon: Link2 },
+];
+
+const MODULE_META: Record<CampusModuleId, { icon: React.ElementType; color: string; description: string }> = {
+  marketplace: { icon: ShoppingBag, color: "bg-violet-500/10 text-violet-400 border-violet-500/20", description: "Buy, sell, and trade campus items with verified students." },
+  "lost-found": { icon: MapPin, color: "bg-orange-500/10 text-orange-400 border-orange-500/20", description: "Report lost items and help classmates recover their belongings." },
+  roommates: { icon: School, color: "bg-sky-500/10 text-sky-400 border-sky-500/20", description: "Find compatible flatmates near your college or PG." },
+  "campus-connect": { icon: Heart, color: "bg-rose-500/10 text-rose-400 border-rose-500/20", description: "Meet and connect with students sharing similar interests." },
+  notes: { icon: BookOpen, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", description: "Share, access, and collaborate on study notes and resources." },
+  projects: { icon: FolderGit2, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", description: "Build and collaborate on student tech and research projects." },
+  rides: { icon: Car, color: "bg-amber-500/10 text-amber-400 border-amber-500/20", description: "Share campus rides and coordinate cab pooling with peers." },
+  tuition: { icon: GraduationCap, color: "bg-teal-500/10 text-teal-400 border-teal-500/20", description: "Seniors teach juniors — peer learning marketplace." },
+  events: { icon: CalendarDays, color: "bg-pink-500/10 text-pink-400 border-pink-500/20", description: "Discover fests, hackathons, and join study groups." },
+};
+
 const POPULAR_COLLEGES = [
   "Indian Institute of Technology Delhi (IITD)",
   "Indian Institute of Technology Bombay (IITB)",
@@ -74,74 +118,21 @@ const POPULAR_COLLEGES = [
   "Indira Gandhi Delhi Technical University for Women (IGDTUW)",
 ];
 
-// Popular Indian Cities
 const POPULAR_CITIES = [
-  "Delhi NCR",
-  "Bengaluru",
-  "Mumbai",
-  "Pune",
-  "Hyderabad",
-  "Chennai",
-  "Kolkata",
-  "Jaipur",
-  "Ahmedabad",
-  "Chandigarh",
-  "Lucknow",
-  "Indore",
-  "Bhopal",
-  "Noida",
-  "Gurgaon",
-  "Dehradun",
-  "Patna",
-  "Coimbatore",
-  "Kochi",
-  "Varanasi",
+  "Delhi NCR", "Bengaluru", "Mumbai", "Pune", "Hyderabad",
+  "Chennai", "Kolkata", "Jaipur", "Ahmedabad", "Chandigarh",
+  "Lucknow", "Indore", "Bhopal", "Noida", "Gurgaon",
+  "Dehradun", "Patna", "Coimbatore", "Kochi", "Varanasi",
 ];
 
-// Indian States List
 const INDIAN_STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Delhi NCR",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Delhi NCR", "Goa", "Gujarat", "Haryana", "Himachal Pradesh",
+  "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha",
+  "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
 ];
-
-const MODULE_ICONS: Record<CampusModuleId, any> = {
-  marketplace: ShoppingBag,
-  "lost-found": MapPin,
-  roommates: School,
-  "campus-connect": Heart,
-  notes: BookOpen,
-  projects: FolderGit2,
-  rides: Car,
-  tuition: GraduationCap,
-  events: CalendarDays,
-};
 
 function SettingsRoute() {
   return (
@@ -154,570 +145,431 @@ function SettingsRoute() {
 function SettingsPage() {
   const navigate = useNavigate();
   const { profile, refreshProfile, user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
 
-  // Accordion open section (null if all closed, or specific id)
-  const [openSection, setOpenSection] = useState<SettingsSection | null>("spaces");
+  const [activeSection, setActiveSection] = useState<NavSection>("spaces");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displaySection, setDisplaySection] = useState<NavSection>("spaces");
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const [isSavingLocation, setIsSavingLocation] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
-
-  // Form State for Campus Location
+  // Location form
   const [formData, setFormData] = useState({
-    college: "",
-    branch: "",
-    year: "3rd Year",
-    phone: "",
-    city: "",
-    state: "Delhi NCR",
-    pincode: "",
-    campusArea: "",
+    college: "", branch: "", year: "3rd Year",
+    phone: "", city: "", state: "Delhi NCR",
+    pincode: "", campusArea: "",
   });
-
-  // Autocomplete UI state
   const [collegeQuery, setCollegeQuery] = useState("");
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
+  const [showOtherCollegeInput, setShowOtherCollegeInput] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Module Settings State
+  // Modules
   const [userSettingsRow, setUserSettingsRow] = useState<UserSettingsRow | null>(null);
   const [modulesLoading, setModulesLoading] = useState(true);
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
 
-  // Notification State
+  // Notifications
   const [notifSettings, setNotifSettings] = useState({
-    marketplace: true,
-    chats: true,
-    campusEvents: true,
-    roommateAlerts: true,
-    emailDigest: false,
+    chats: true, campusEvents: true, roommateAlerts: true, emailDigest: false,
   });
 
-  // Email Change State (OTP Verification)
+  // Security
   const [newEmail, setNewEmail] = useState("");
   const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
   const [emailOtp, setEmailOtp] = useState(["", "", "", "", "", ""]);
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
-
-  // Instagram-style Deactivate Account State
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateReason, setDeactivateReason] = useState("");
   const [deactivatePassword, setDeactivatePassword] = useState("");
   const [isDeactivating, setIsDeactivating] = useState(false);
-  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
-
-  // Instagram-style Delete Account State
-  const [deleteReason, setDeleteReason] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Password Reset State
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 
-  // Load Profile and Settings
+  // Autosave to localStorage whenever formData changes
+  useEffect(() => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      localStorage.setItem("nexora-settings-draft", JSON.stringify(formData));
+    }, 800);
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
+  }, [formData]);
+
+  // Load profile — merge with any autosaved draft
   useEffect(() => {
     if (profile || user) {
       const meta = user?.user_metadata || {};
-      const collegeVal = profile?.college_name || meta.college_name || "";
-      const cityVal = meta.city || "Delhi NCR";
+      const saved = localStorage.getItem("nexora-settings-draft");
+      const draft = saved ? JSON.parse(saved) : null;
+      const collegeVal = draft?.college || profile?.college_name || meta.college_name || "";
+      const cityVal = draft?.city || meta.city || "";
       setFormData({
         college: collegeVal,
-        branch: meta.branch || "Computer Science",
-        year: meta.year || "3rd Year",
-        phone: profile?.phone || meta.phone || "",
+        branch: draft?.branch || meta.branch || "",
+        year: draft?.year || meta.year || "3rd Year",
+        phone: draft?.phone || profile?.phone || meta.phone || "",
         city: cityVal,
-        state: meta.state || "Delhi NCR",
-        pincode: meta.pincode || "",
-        campusArea: meta.campusArea || "",
+        state: draft?.state || meta.state || "Delhi NCR",
+        pincode: draft?.pincode || meta.pincode || "",
+        campusArea: draft?.campusArea || meta.campusArea || "",
       });
       setCollegeQuery(collegeVal);
       setCityQuery(cityVal);
+      if (collegeVal && !POPULAR_COLLEGES.includes(collegeVal)) {
+        setShowOtherCollegeInput(true);
+      }
     }
   }, [profile, user]);
 
-  // Load User Module Settings
+  // Load module settings
   useEffect(() => {
     if (user?.id) {
       setModulesLoading(true);
       getUserSettings(user.id)
-        .then((settings) => {
-          setUserSettingsRow(settings);
-        })
+        .then((s) => setUserSettingsRow(s))
         .catch(console.error)
         .finally(() => setModulesLoading(false));
     }
   }, [user?.id]);
 
-  // Handle active section from sessionStorage navigation
+  // Read sessionStorage target section
   useEffect(() => {
-    const requested = window.sessionStorage.getItem("nexora-settings-section") as SettingsSection | null;
+    const req = window.sessionStorage.getItem("nexora-settings-section") as NavSection | null;
     window.sessionStorage.removeItem("nexora-settings-section");
-    if (requested) {
-      setOpenSection(requested);
+    if (req) {
+      setActiveSection(req);
+      setDisplaySection(req);
     }
   }, []);
 
-  // OTP Countdown timer
+  // OTP countdown
   useEffect(() => {
     if (otpCountdown > 0) {
-      const timer = setTimeout(() => setOtpCountdown((c) => c - 1), 1000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setOtpCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(t);
     }
   }, [otpCountdown]);
 
-  // Toggle Accordion
-  const toggleSection = (id: SettingsSection) => {
-    setOpenSection((prev) => (prev === id ? null : id));
-  };
+  // Smooth section transition
+  const handleSectionChange = useCallback((id: NavSection) => {
+    if (id === activeSection || isTransitioning) return;
+    setIsTransitioning(true);
+    setActiveSection(id);
+    setTimeout(() => {
+      setDisplaySection(id);
+      setIsTransitioning(false);
+    }, 180);
+  }, [activeSection, isTransitioning]);
 
-  // Live Location Access (GPS)
+  // GPS
   const handleGetLiveLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
+    if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      async (pos) => {
         try {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-          );
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
           if (res.ok) {
-            const data = await res.json();
-            const addr = data.address || {};
-            const city = addr.city || addr.town || addr.state_district || addr.county || "Delhi NCR";
+            const d = await res.json();
+            const addr = d.address || {};
+            const city = addr.city || addr.town || addr.county || "";
             const state = addr.state || "Delhi NCR";
             const pincode = addr.postcode || "";
-            const area = addr.suburb || addr.neighbourhood || addr.road || "";
-
-            setFormData((prev) => ({
-              ...prev,
-              city: city,
-              state: state,
-              pincode: pincode,
-              campusArea: area,
-            }));
+            const area = addr.suburb || addr.neighbourhood || "";
+            setFormData(f => ({ ...f, city, state, pincode, campusArea: area }));
             setCityQuery(city);
-            toast.success(`Location detected: ${city}, ${state}`);
-          } else {
-            toast.success("GPS coordinates retrieved");
+            toast.success(`Detected: ${city}, ${state}`);
           }
-        } catch (e) {
-          console.error(e);
-          toast.success("Location coordinates captured");
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      (error) => {
+        } catch { toast.success("Location captured"); }
         setIsLocating(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Please allow location access in your browser.");
-        } else {
-          toast.error("Could not fetch location. Please type manually.");
-        }
+      },
+      (err) => {
+        setIsLocating(false);
+        toast.error(err.code === 1 ? "Location permission denied" : "Could not fetch location");
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
-  // Pincode auto-lookup
+  // Pincode lookup
   const handlePincodeChange = async (val: string) => {
-    const cleanPin = val.replace(/\D/g, "").slice(0, 6);
-    setFormData((f) => ({ ...f, pincode: cleanPin }));
-
-    if (cleanPin.length === 6) {
+    const pin = val.replace(/\D/g, "").slice(0, 6);
+    setFormData(f => ({ ...f, pincode: pin }));
+    if (pin.length === 6) {
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
         if (res.ok) {
-          const data = await res.json();
-          if (data?.[0]?.Status === "Success" && data[0]?.PostOffice?.[0]) {
-            const po = data[0].PostOffice[0];
-            const city = po.District || po.Division;
-            const state = po.State;
-            setFormData((f) => ({
-              ...f,
-              city: city,
-              state: state,
-            }));
-            setCityQuery(city);
-            toast.success(`PIN ${cleanPin}: ${city}, ${state}`);
+          const d = await res.json();
+          if (d?.[0]?.Status === "Success" && d[0]?.PostOffice?.[0]) {
+            const po = d[0].PostOffice[0];
+            setFormData(f => ({ ...f, city: po.District || po.Division, state: po.State }));
+            setCityQuery(po.District || po.Division);
+            toast.success(`${pin}: ${po.District}, ${po.State}`);
           }
         }
-      } catch (e) {
-        // Silent fallback
-      }
+      } catch { /* silent */ }
     }
   };
 
-  // Save Campus & Location Details
+  // Save location
   const handleSaveLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || isSavingLocation) return;
-
     setIsSavingLocation(true);
     try {
-      // 1. Update Supabase profiles table
-      const { error: profileError } = await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          college_name: formData.college.trim(),
-          phone: formData.phone.trim(),
-        },
+      await supabase.from("profiles").upsert(
+        { id: user.id, email: user.email ?? null, college_name: formData.college.trim(), phone: formData.phone.trim() },
         { onConflict: "id" }
       );
-
-      if (profileError) {
-        console.error("Profile save error:", profileError);
-      }
-
-      // 2. Update user_metadata
       await supabase.auth.updateUser({
         data: {
-          college_name: formData.college.trim(),
-          branch: formData.branch.trim(),
-          year: formData.year.trim(),
-          phone: formData.phone.trim(),
-          city: formData.city.trim(),
-          state: formData.state.trim(),
-          pincode: formData.pincode.trim(),
-          campusArea: formData.campusArea.trim(),
+          college_name: formData.college.trim(), branch: formData.branch.trim(),
+          year: formData.year, phone: formData.phone.trim(), city: formData.city.trim(),
+          state: formData.state, pincode: formData.pincode.trim(), campusArea: formData.campusArea.trim(),
         },
       });
-
       await refreshProfile();
-      toast.success("Campus location details saved successfully!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save location. Please try again.");
-    } finally {
-      setIsSavingLocation(false);
-    }
+      localStorage.removeItem("nexora-settings-draft");
+      toast.success("Campus details saved!");
+    } catch { toast.error("Failed to save. Try again."); }
+    finally { setIsSavingLocation(false); }
   };
 
-  // Toggle Module Enabled
+  // Toggle module
   const handleToggleModule = async (moduleId: CampusModuleId) => {
     if (!user) return;
-    const currentlyEnabled = isModuleEnabled(userSettingsRow, moduleId);
-    const nextState = !currentlyEnabled;
-
-    if (nextState) {
-      if (!formData.college.trim() || !formData.city.trim()) {
-        toast.warning(
-          `Please set your College & City in Campus Location before activating ${moduleId}`
-        );
-        setOpenSection("location");
-        return;
-      }
+    const nextState = !isModuleEnabled(userSettingsRow, moduleId);
+    if (nextState && (!formData.college.trim() || !formData.city.trim())) {
+      toast.warning("Set your college & city in Location settings first");
+      handleSectionChange("location");
+      return;
     }
-
     setTogglingModule(moduleId);
     try {
       const { data, error } = await updateModuleEnabled(user.id, moduleId, nextState);
       if (error) throw error;
       setUserSettingsRow(data);
-      toast.success(
-        nextState
-          ? `${moduleId.toUpperCase()} is now Active`
-          : `${moduleId.toUpperCase()} has been paused`
-      );
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || "Failed to update module setting");
-    } finally {
-      setTogglingModule(null);
-    }
+      toast.success(nextState ? `${moduleId} enabled` : `${moduleId} paused`);
+    } catch (e: any) { toast.error(e.message || "Failed to update"); }
+    finally { setTogglingModule(null); }
   };
 
-  // Trigger Email Change Code
+  // Email change
   const handleSendEmailOtp = async () => {
-    if (!newEmail.trim() || !newEmail.includes("@")) {
-      toast.error("Please enter a valid new email address");
-      return;
-    }
-    if (newEmail.trim() === user?.email) {
-      toast.error("New email must be different from current email");
-      return;
-    }
-
+    if (!newEmail.includes("@") || newEmail === user?.email) { toast.error("Enter a different valid email"); return; }
     setIsEmailOtpSent(true);
     setOtpCountdown(60);
-    toast.success(`Verification code sent to current email: ${user?.email}`);
+    toast.success(`Code sent to ${user?.email}`);
   };
 
-  // Verify and change email
-  const handleVerifyAndUpdateEmail = async () => {
-    const code = emailOtp.join("");
-    if (code.length < 6) {
-      toast.error("Please enter the 6-digit security code");
-      return;
-    }
-
+  const handleVerifyEmail = async () => {
+    if (emailOtp.join("").length < 6) { toast.error("Enter 6-digit code"); return; }
     setIsVerifyingEmail(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail.trim(),
-      });
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
       if (error) throw error;
-      toast.success("Confirmation link sent to your new email! Please check your inbox.");
-      setIsEmailOtpSent(false);
-      setNewEmail("");
-      setEmailOtp(["", "", "", "", "", ""]);
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || "Verification failed. Please try again.");
-    } finally {
-      setIsVerifyingEmail(false);
-    }
+      toast.success("Check your new email for confirmation link.");
+      setIsEmailOtpSent(false); setNewEmail(""); setEmailOtp(["","","","","",""]);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setIsVerifyingEmail(false); }
   };
 
-  // Password Reset Link
   const handlePasswordReset = async () => {
     if (!user?.email) return;
     setIsResettingPassword(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/login`,
-      });
-      if (error) throw error;
-      toast.success(`Password reset instructions sent to ${user.email}`);
-    } catch (err: any) {
-      console.error(err);
-      toast.info(`Password reset instructions triggered for ${user.email}`);
-    } finally {
-      setIsResettingPassword(false);
-    }
+      await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: `${window.location.origin}/auth/login` });
+      toast.success(`Reset link sent to ${user.email}`);
+    } catch { toast.info(`Reset triggered for ${user.email}`); }
+    finally { setIsResettingPassword(false); }
   };
 
-  // Instagram-style Account Deactivation
-  const handleDeactivateAccount = async () => {
-    if (!deactivateReason) {
-      toast.error("Please select a reason for deactivating");
-      return;
-    }
-    if (!deactivatePassword) {
-      toast.error("Please enter your password to confirm");
-      return;
-    }
-
+  const handleDeactivate = async () => {
+    if (!deactivateReason || !deactivatePassword) { toast.error("Please fill all fields"); return; }
     setIsDeactivating(true);
     try {
-      await supabase.auth.updateUser({
-        data: { is_deactivated: true, deactivation_date: new Date().toISOString() },
-      });
-      toast.success("Your account is now deactivated. Log in anytime to reactivate.");
+      await supabase.auth.updateUser({ data: { is_deactivated: true } });
+      toast.success("Account deactivated. Log in to reactivate.");
       setShowDeactivateModal(false);
       await signOut();
       void navigate({ to: AUTH_ROUTES.login });
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Deactivation failed: " + e.message);
-    } finally {
-      setIsDeactivating(false);
-    }
+    } catch (e: any) { toast.error(e.message); }
+    finally { setIsDeactivating(false); }
   };
 
-  // Instagram-style Account Deletion (Permanent)
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      toast.error("Please enter your password to confirm account deletion");
-      return;
-    }
-
+  const handleDelete = async () => {
+    if (!deletePassword) { toast.error("Enter your password"); return; }
     setIsDeleting(true);
     try {
-      if (user?.id) {
-        await supabase.from("profiles").delete().eq("id", user.id);
-      }
-      toast.success("Account scheduled for permanent deletion. Logging out.");
+      if (user?.id) await supabase.from("profiles").delete().eq("id", user.id);
+      toast.success("Account scheduled for deletion.");
       setShowDeleteModal(false);
       await signOut();
       void navigate({ to: AUTH_ROUTES.login });
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Failed to delete account: " + e.message);
-    } finally {
-      setIsDeleting(false);
-    }
+    } catch (e: any) { toast.error(e.message); }
+    finally { setIsDeleting(false); }
   };
 
-  // Filtered College Suggestions
-  const filteredColleges = POPULAR_COLLEGES.filter((c) =>
-    c.toLowerCase().includes(collegeQuery.toLowerCase())
-  );
-
-  // Filtered City Suggestions
-  const filteredCities = POPULAR_CITIES.filter((c) =>
-    c.toLowerCase().includes(cityQuery.toLowerCase())
-  );
+  const filteredColleges = POPULAR_COLLEGES.filter(c => c.toLowerCase().includes(collegeQuery.toLowerCase()));
+  const filteredCities = POPULAR_CITIES.filter(c => c.toLowerCase().includes(cityQuery.toLowerCase()));
+  const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student";
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "ST";
 
   return (
-    <main className="min-h-screen bg-background text-foreground transition-colors">
-      {/* ── Perfectly Aligned Full-Width Header ── */}
-      <header className="sticky top-0 z-40 w-full border-b border-border bg-paper/95 backdrop-blur-xl">
-        <div className="w-full max-w-5xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
-          {/* Left: Clean Icon-Only Back Button + Logo */}
+    <main className="min-h-screen bg-background text-foreground">
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-50 border-b border-border bg-paper/90 backdrop-blur-xl">
+        <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-foreground shadow-soft transition-all hover:bg-secondary hover:scale-105 active:scale-95"
+              className="grid h-8 w-8 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-all hover:bg-secondary hover:text-foreground active:scale-95"
               aria-label="Go back"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
             </button>
-
-            <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-102">
+            <Link to="/" className="flex items-center gap-2">
               <NexoraLogo size="sm" />
-              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
-                / Settings
-              </span>
             </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="text-sm font-semibold text-muted-foreground">Settings</span>
           </div>
-
-          {/* Right: User Profile Dropdown */}
-          <div className="flex items-center gap-3">
-            <ProfileDropdown />
-          </div>
+          <ProfileDropdown />
         </div>
       </header>
 
-      {/* ── Main Container (Balanced Width, No Empty Gutters) ── */}
-      <div className="w-full max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-6">
-        {/* Page Heading & Quick Overview */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-5">
-          <div>
-            <h1 className="font-display text-2xl font-black text-foreground sm:text-3xl">
-              Account & Campus Settings
-            </h1>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Click any section below to expand and customize your campus options.
+      {/* ── TWO-COLUMN LAYOUT ── */}
+      <div className="flex w-full min-h-[calc(100vh-56px)]">
+
+        {/* ── LEFT SIDEBAR ── */}
+        <aside className="w-48 shrink-0 border-r border-border py-6 px-2 lg:w-56">
+          <div className="sticky top-[56px] pt-4">
+            {/* Nav label */}
+            <p className="mb-2 px-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Settings
             </p>
-          </div>
 
-          {/* Expand/Collapse Quick Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setOpenSection(openSection ? null : "spaces")}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span>{openSection ? "Collapse All" : "Open Sections"}</span>
-            </button>
+            {/* Nav items */}
+            <nav className="space-y-0.5">
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const active = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSectionChange(item.id)}
+                    className={`group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-150 ${
+                      active
+                        ? "bg-primary text-primary-foreground shadow-soft"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 transition-colors ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="ml-auto rounded-full bg-primary/20 px-1.5 py-0.5 text-[9px] font-black text-primary">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
-        </div>
+        </aside>
 
-        {/* ── Expandable Options List (Hide/Reveal on Click) ── */}
-        <div className="space-y-4">
-          {/* ═══════════════════════════════════════════════════════ */}
-          {/* 1. CAMPUS SPACES & ACCESS ACCORDION                     */}
-          {/* ═══════════════════════════════════════════════════════ */}
-          <div className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden transition-all">
-            {/* Header Trigger */}
-            <button
-              type="button"
-              onClick={() => toggleSection("spaces")}
-              className={`w-full flex items-center justify-between p-4 sm:p-5 text-left transition-colors ${
-                openSection === "spaces" ? "bg-secondary/40 border-b border-border" : "hover:bg-secondary/20"
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <Layers className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black text-foreground">
-                      Campus Spaces & Access
-                    </h2>
-                    <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-black uppercase text-primary">
-                      {CAMPUS_MODULES.length} Spaces
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Turn on or pause Marketplace, Dating, Roommates, Rides, Notes and Events.
+        {/* ── RIGHT CONTENT PANEL ── */}
+        <div className="flex-1 min-w-0 py-6 px-6 lg:px-8 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="transition-all duration-200"
+            style={{
+              opacity: isTransitioning ? 0 : 1,
+              transform: isTransitioning ? "translateX(12px)" : "translateX(0px)",
+            }}
+          >
+
+            {/* ════════════════════════════════════════════ */}
+            {/*  CAMPUS SPACES                               */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "spaces" && (
+              <div className="space-y-8">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Campus Spaces</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Enable or pause individual campus features. Active spaces appear in your home feed.
                   </p>
                 </div>
-              </div>
 
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground">
-                {openSection === "spaces" ? (
-                  <ChevronUp className="h-4 w-4 text-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </div>
-            </button>
-
-            {/* Expandable Body */}
-            {openSection === "spaces" && (
-              <div className="p-4 sm:p-6 space-y-4 animate-in fade-in duration-200">
                 {modulesLoading ? (
-                  <div className="flex items-center justify-center py-10 text-muted-foreground">
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                  <div className="flex h-64 items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {CAMPUS_MODULES.map((mod) => {
-                      const Icon = MODULE_ICONS[mod.id] || ShoppingBag;
-                      const isEnabled = isModuleEnabled(userSettingsRow, mod.id);
-                      const isToggling = togglingModule === mod.id;
+                      const meta = MODULE_META[mod.id];
+                      const Icon = meta.icon;
+                      const enabled = isModuleEnabled(userSettingsRow, mod.id);
+                      const toggling = togglingModule === mod.id;
 
                       return (
                         <div
                           key={mod.id}
-                          className={`flex items-center justify-between rounded-2xl border p-3.5 transition-all ${
-                            isEnabled
-                              ? "border-primary/30 bg-primary/5 shadow-soft"
-                              : "border-border bg-background/60 opacity-80"
+                          className={`group relative flex flex-col gap-4 rounded-2xl border p-5 transition-all duration-200 hover:shadow-mega ${
+                            enabled
+                              ? "border-primary/25 bg-card shadow-soft"
+                              : "border-border bg-card/50 hover:bg-card"
                           }`}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <div
-                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-colors ${
-                                isEnabled
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-secondary text-muted-foreground"
-                              }`}
-                            >
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-foreground">
-                                {mod.label}
-                              </p>
-                              <span
-                                className={`text-[10px] font-bold ${
-                                  isEnabled ? "text-primary" : "text-muted-foreground"
-                                }`}
-                              >
-                                {isEnabled ? "Active" : "Paused"}
-                              </span>
-                            </div>
+                          {/* Status dot */}
+                          <span
+                            className={`absolute right-4 top-4 h-2 w-2 rounded-full transition-colors ${
+                              enabled ? "bg-emerald-400 shadow-[0_0_8px_theme(colors.emerald.400)]" : "bg-muted-foreground/30"
+                            }`}
+                          />
+
+                          {/* Icon */}
+                          <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border ${meta.color}`}>
+                            <Icon className="h-5 w-5" />
                           </div>
 
-                          <button
-                            type="button"
-                            disabled={isToggling}
-                            onClick={() => handleToggleModule(mod.id)}
-                            className={`shrink-0 inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                              isEnabled ? "bg-primary" : "bg-secondary"
-                            }`}
-                            aria-label={`Toggle ${mod.label}`}
-                          >
-                            <span
-                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                                isEnabled ? "translate-x-4.5" : "translate-x-0.5"
-                              }`}
-                            />
-                          </button>
+                          {/* Info */}
+                          <div className="flex-1 space-y-1.5">
+                            <h3 className="text-sm font-bold text-foreground">{mod.label}</h3>
+                            <p className="text-xs leading-relaxed text-muted-foreground">{meta.description}</p>
+                          </div>
+
+                          {/* Toggle */}
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-semibold ${enabled ? "text-emerald-400" : "text-muted-foreground"}`}>
+                              {enabled ? "Active" : "Paused"}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={toggling}
+                              onClick={() => handleToggleModule(mod.id)}
+                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                enabled ? "bg-primary" : "bg-secondary"
+                              } ${toggling ? "opacity-50" : ""}`}
+                              aria-label={`Toggle ${mod.label}`}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ${
+                                  enabled ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -725,694 +577,551 @@ function SettingsPage() {
                 )}
               </div>
             )}
-          </div>
 
-          {/* ═══════════════════════════════════════════════════════ */}
-          {/* 2. CAMPUS & LOCATION DETAILS ACCORDION                  */}
-          {/* ═══════════════════════════════════════════════════════ */}
-          <div className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden transition-all">
-            {/* Header Trigger */}
-            <button
-              type="button"
-              onClick={() => toggleSection("location")}
-              className={`w-full flex items-center justify-between p-4 sm:p-5 text-left transition-colors ${
-                openSection === "location" ? "bg-secondary/40 border-b border-border" : "hover:bg-secondary/20"
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <MapPin className="h-5 w-5" />
+            {/* ════════════════════════════════════════════ */}
+            {/*  LOCATION & CAMPUS                           */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "location" && (
+              <form onSubmit={handleSaveLocation} className="space-y-8 w-full">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Location & Campus</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Connect your campus location to enable roommate matching, nearby rides, and peer listings.
+                  </p>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black text-foreground">
-                      Campus & Location Details
-                    </h2>
-                    {formData.city && (
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-foreground">
-                        {formData.city}
-                      </span>
-                    )}
+
+                {/* GPS Banner */}
+                <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <Navigation className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Live GPS Detection</p>
+                      <p className="text-xs text-muted-foreground">Auto-fill city, state, and pincode from your current location.</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Live GPS location, College / University search, City and Pin Code.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground">
-                {openSection === "location" ? (
-                  <ChevronUp className="h-4 w-4 text-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </div>
-            </button>
-
-            {/* Expandable Body */}
-            {openSection === "location" && (
-              <form onSubmit={handleSaveLocation} className="p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-secondary/30 rounded-xl p-3.5 border border-border">
-                  <p className="text-xs text-muted-foreground">
-                    Get precise peer recommendations and nearby roommate listings by setting your campus location.
-                  </p>
-
                   <button
                     type="button"
                     onClick={handleGetLiveLocation}
                     disabled={isLocating}
-                    className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all active:scale-95"
+                    className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95 disabled:opacity-60"
                   >
-                    {isLocating ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Detecting GPS...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Navigation className="h-3.5 w-3.5" />
-                        <span>Use Live GPS Location</span>
-                      </>
-                    )}
+                    {isLocating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Navigation className="h-3.5 w-3.5" />}
+                    <span>{isLocating ? "Detecting..." : "Detect Location"}</span>
                   </button>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {/* College Autocomplete */}
-                  <div className="relative space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-bold text-muted-foreground flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <School className="h-3.5 w-3.5 text-primary" />
-                        College / University
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">Search or type your campus</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={collegeQuery}
-                      onChange={(e) => {
-                        setCollegeQuery(e.target.value);
-                        setFormData({ ...formData, college: e.target.value });
-                        setShowCollegeDropdown(true);
-                      }}
-                      onFocus={() => setShowCollegeDropdown(true)}
-                      placeholder="e.g. Indian Institute of Technology Delhi"
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                    />
-
-                    {showCollegeDropdown && filteredColleges.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-mega">
-                        {filteredColleges.map((col) => (
+                {/* Fields */}
+                <div className="space-y-6">
+                  <FieldSection title="Academic Info" icon={GraduationCap}>
+                    {/* College autocomplete */}
+                    <div className="relative space-y-1.5">
+                      <FieldLabel>College / University</FieldLabel>
+                      <input
+                        type="text"
+                        required
+                        value={showOtherCollegeInput ? "" : collegeQuery}
+                        onChange={(e) => { setCollegeQuery(e.target.value); setFormData({ ...formData, college: e.target.value }); setShowCollegeDropdown(true); setShowOtherCollegeInput(false); }}
+                        onFocus={() => { if (!showOtherCollegeInput) setShowCollegeDropdown(true); }}
+                        onBlur={() => setTimeout(() => setShowCollegeDropdown(false), 200)}
+                        placeholder={showOtherCollegeInput ? "Click \"Other *\" below to type manually" : "Search your institution…"}
+                        readOnly={showOtherCollegeInput}
+                        className={`settings-input ${showOtherCollegeInput ? "opacity-50 cursor-not-allowed" : ""}`}
+                      />
+                      {showCollegeDropdown && (
+                        <SuggestionDropdown>
+                          {filteredColleges.map((c) => (
+                            <SuggestionItem key={c} icon={School} label={c} onClick={() => { setFormData({ ...formData, college: c }); setCollegeQuery(c); setShowCollegeDropdown(false); setShowOtherCollegeInput(false); }} />
+                          ))}
+                          {/* Other option — always last */}
                           <button
-                            key={col}
                             type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, college: col });
-                              setCollegeQuery(col);
-                              setShowCollegeDropdown(false);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                            onClick={() => { setShowOtherCollegeInput(true); setShowCollegeDropdown(false); setCollegeQuery(""); setFormData({ ...formData, college: "" }); }}
+                            className="flex w-full items-center gap-2.5 rounded-xl border-t border-border/60 mt-1 pt-1.5 px-3 py-2 text-left text-xs font-bold text-primary hover:bg-primary/5 transition-colors"
                           >
-                            <School className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate">{col}</span>
+                            <span className="text-primary">*</span>
+                            <span>Other — type your college name manually</span>
                           </button>
-                        ))}
+                        </SuggestionDropdown>
+                      )}
+
+                      {/* Manual college input shown when Other is selected */}
+                      {showOtherCollegeInput && (
+                        <div className="space-y-1.5 animate-in fade-in duration-150">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-primary">*</span>
+                            <FieldLabel>Type your college name</FieldLabel>
+                            <button
+                              type="button"
+                              onClick={() => { setShowOtherCollegeInput(false); setCollegeQuery(""); setFormData({ ...formData, college: "" }); }}
+                              className="ml-auto text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              ← Search list instead
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            autoFocus
+                            required
+                            value={formData.college}
+                            onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                            placeholder="e.g. Sharda University, Greater Noida"
+                            className="settings-input border-primary/40 focus:border-primary"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <FieldLabel>Branch / Department</FieldLabel>
+                        <input type="text" value={formData.branch} onChange={(e) => setFormData({ ...formData, branch: e.target.value })} placeholder="e.g. Computer Science" className="settings-input" />
                       </div>
-                    )}
-                  </div>
-
-                  {/* City Autocomplete */}
-                  <div className="relative space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">City</label>
-                    <input
-                      type="text"
-                      required
-                      value={cityQuery}
-                      onChange={(e) => {
-                        setCityQuery(e.target.value);
-                        setFormData({ ...formData, city: e.target.value });
-                        setShowCityDropdown(true);
-                      }}
-                      onFocus={() => setShowCityDropdown(true)}
-                      placeholder="e.g. Bengaluru"
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                    />
-
-                    {showCityDropdown && filteredCities.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 z-30 mt-1 max-h-40 overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-mega">
-                        {filteredCities.map((city) => (
-                          <button
-                            key={city}
-                            type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, city });
-                              setCityQuery(city);
-                              setShowCityDropdown(false);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold text-foreground hover:bg-secondary"
-                          >
-                            <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
-                            <span>{city}</span>
-                          </button>
-                        ))}
+                      <div className="space-y-1.5">
+                        <FieldLabel>Year of Study</FieldLabel>
+                        <select value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} className="settings-input">
+                          {["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "PG / Masters", "PhD"].map(y => <option key={y}>{y}</option>)}
+                        </select>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </FieldSection>
 
-                  {/* State */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">State / Region</label>
-                    <select
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                    >
-                      {INDIAN_STATES.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <FieldSection title="Location Details" icon={MapPin}>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {/* City autocomplete */}
+                      <div className="relative space-y-1.5">
+                        <FieldLabel>City</FieldLabel>
+                        <input
+                          type="text"
+                          required
+                          value={cityQuery}
+                          onChange={(e) => { setCityQuery(e.target.value); setFormData({ ...formData, city: e.target.value }); setShowCityDropdown(true); }}
+                          onFocus={() => setShowCityDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowCityDropdown(false), 150)}
+                          placeholder="e.g. Bengaluru"
+                          className="settings-input"
+                        />
+                        {showCityDropdown && filteredCities.length > 0 && (
+                          <SuggestionDropdown>
+                            {filteredCities.map((c) => (
+                              <SuggestionItem key={c} icon={Building2} label={c} onClick={() => { setFormData({ ...formData, city: c }); setCityQuery(c); setShowCityDropdown(false); }} />
+                            ))}
+                          </SuggestionDropdown>
+                        )}
+                      </div>
 
-                  {/* Pincode */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">Pincode (6-digit)</label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={formData.pincode}
-                      onChange={(e) => handlePincodeChange(e.target.value)}
-                      placeholder="e.g. 110001"
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary font-mono"
-                    />
-                  </div>
+                      <div className="space-y-1.5">
+                        <FieldLabel>State</FieldLabel>
+                        <select value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} className="settings-input">
+                          {INDIAN_STATES.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                      </div>
 
-                  {/* Phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground">Contact Phone / WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="e.g. +91 98765 43210"
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                    />
-                  </div>
+                      <div className="space-y-1.5">
+                        <FieldLabel>Pincode</FieldLabel>
+                        <input type="text" maxLength={6} value={formData.pincode} onChange={(e) => handlePincodeChange(e.target.value)} placeholder="6-digit pincode" className="settings-input font-mono" />
+                      </div>
 
-                  {/* Campus Area / Hostel */}
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-bold text-muted-foreground">
-                      Hostel / Block / Campus Area (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.campusArea}
-                      onChange={(e) => setFormData({ ...formData, campusArea: e.target.value })}
-                      placeholder="e.g. Hostel Block B, Room 204 or Main Campus Center"
-                      className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                    />
-                  </div>
+                      <div className="space-y-1.5">
+                        <FieldLabel>WhatsApp / Phone</FieldLabel>
+                        <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" className="settings-input" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <FieldLabel>Hostel / Block / Area (Optional)</FieldLabel>
+                      <input type="text" value={formData.campusArea} onChange={(e) => setFormData({ ...formData, campusArea: e.target.value })} placeholder="e.g. Hostel Block B, Room 204" className="settings-input" />
+                    </div>
+                  </FieldSection>
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <Button type="submit" disabled={isSavingLocation} className="rounded-xl px-6 text-xs font-bold">
-                    {isSavingLocation ? (
-                      <>
-                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving...
-                      </>
-                    ) : (
-                      "Save Campus Details"
-                    )}
+                <div className="flex items-center gap-3 pt-2">
+                  <Button type="submit" disabled={isSavingLocation} className="rounded-xl px-6 font-bold">
+                    {isSavingLocation ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Saving…</> : "Save Campus Details"}
                   </Button>
                 </div>
               </form>
             )}
-          </div>
 
-          {/* ═══════════════════════════════════════════════════════ */}
-          {/* 3. NOTIFICATIONS ACCORDION                              */}
-          {/* ═══════════════════════════════════════════════════════ */}
-          <div className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden transition-all">
-            {/* Header Trigger */}
-            <button
-              type="button"
-              onClick={() => toggleSection("notifications")}
-              className={`w-full flex items-center justify-between p-4 sm:p-5 text-left transition-colors ${
-                openSection === "notifications" ? "bg-secondary/40 border-b border-border" : "hover:bg-secondary/20"
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <Bell className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black text-foreground">
-                      Notifications & Alerts
-                    </h2>
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-foreground">
-                      Enabled
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Marketplace messages, campus event updates, and roommate alerts.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground">
-                {openSection === "notifications" ? (
-                  <ChevronUp className="h-4 w-4 text-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </div>
-            </button>
-
-            {/* Expandable Body */}
-            {openSection === "notifications" && (
-              <div className="p-4 sm:p-6 space-y-3 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-background/50 p-4">
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Marketplace & Chat Messages</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Alerts when classmates message regarding listings or inquiries.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifSettings.chats}
-                    onChange={(e) => {
-                      setNotifSettings({ ...notifSettings, chats: e.target.checked });
-                      toast.success("Notification preference updated");
-                    }}
-                    className="h-4 w-4 rounded border-border text-primary"
-                  />
+            {/* ════════════════════════════════════════════ */}
+            {/*  NOTIFICATIONS                               */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "notifications" && (
+              <div className="space-y-8 w-full">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Notifications</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">Choose which alerts you want to receive across campus features.</p>
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-background/50 p-4">
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Campus Events & Hackathons</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Updates about college fests, competitions, and club workshops.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifSettings.campusEvents}
-                    onChange={(e) => {
-                      setNotifSettings({ ...notifSettings, campusEvents: e.target.checked });
-                      toast.success("Notification preference updated");
-                    }}
-                    className="h-4 w-4 rounded border-border text-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-background/50 p-4">
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Roommate Matching Alerts</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Get notified when matching flatmate or hostel listings go live.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifSettings.roommateAlerts}
-                    onChange={(e) => {
-                      setNotifSettings({ ...notifSettings, roommateAlerts: e.target.checked });
-                      toast.success("Notification preference updated");
-                    }}
-                    className="h-4 w-4 rounded border-border text-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-background/50 p-4">
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Weekly Digest via Email</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Receive a weekly highlight of campus buzz and study notes.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifSettings.emailDigest}
-                    onChange={(e) => {
-                      setNotifSettings({ ...notifSettings, emailDigest: e.target.checked });
-                      toast.success("Notification preference updated");
-                    }}
-                    className="h-4 w-4 rounded border-border text-primary"
-                  />
+                <div className="space-y-3">
+                  {[
+                    { key: "chats", label: "Messages & Marketplace Replies", desc: "Get alerts when someone messages you about a listing or inquiry." },
+                    { key: "campusEvents", label: "Events & Hackathons", desc: "Updates about fests, workshops, club events, and competitions." },
+                    { key: "roommateAlerts", label: "Roommate & PG Listings", desc: "New flatmate matches and hostel listings near your campus." },
+                    { key: "emailDigest", label: "Weekly Email Digest", desc: "A curated weekly roundup of campus buzz and study notes." },
+                  ].map(({ key, label, desc }) => (
+                    <div key={key} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-secondary/20">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                      </div>
+                      <Toggle
+                        enabled={notifSettings[key as keyof typeof notifSettings]}
+                        onChange={(v) => { setNotifSettings(n => ({ ...n, [key]: v })); toast.success("Preference updated"); }}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-          </div>
 
-          {/* ═══════════════════════════════════════════════════════ */}
-          {/* 4. SECURITY & CREDENTIALS ACCORDION                     */}
-          {/* ═══════════════════════════════════════════════════════ */}
-          <div className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden transition-all">
-            {/* Header Trigger */}
-            <button
-              type="button"
-              onClick={() => toggleSection("security")}
-              className={`w-full flex items-center justify-between p-4 sm:p-5 text-left transition-colors ${
-                openSection === "security" ? "bg-secondary/40 border-b border-border" : "hover:bg-secondary/20"
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <Shield className="h-5 w-5" />
+            {/* ════════════════════════════════════════════ */}
+            {/*  APPEARANCE                                  */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "appearance" && (
+              <div className="space-y-8 w-full">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Appearance</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">Customize how Nexora looks and feels.</p>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black text-foreground">
-                      Security & Account Controls
-                    </h2>
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-foreground">
-                      Protected
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Email change with OTP, password reset, temporary deactivation, and delete account.
-                  </p>
-                </div>
-              </div>
 
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground">
-                {openSection === "security" ? (
-                  <ChevronUp className="h-4 w-4 text-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </div>
-            </button>
-
-            {/* Expandable Body */}
-            {openSection === "security" && (
-              <div className="p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
-                {/* ── Change Email with OTP Verification ── */}
-                <div className="rounded-2xl border border-border bg-background/50 p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Mail className="h-4 w-4 text-primary" />
-                    <h3 className="text-xs font-bold text-foreground">Change Account Email</h3>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mb-4">
-                    Current email: <span className="font-bold text-foreground">{user?.email}</span>. A security verification code will be sent to confirm before changing.
-                  </p>
-
-                  {!isEmailOtpSent ? (
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        placeholder="Enter new email address..."
-                        className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
-                      />
-                      <Button
+                <FieldSection title="Color Theme" icon={Sparkles}>
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      { id: "dark", label: "Dark", icon: Moon, desc: "Comfortable for late-night studying" },
+                      { id: "light", label: "Light", icon: Sun, desc: "Clean, bright and minimal" },
+                      { id: "system", label: "Auto", icon: Monitor, desc: "Follows your system preference" },
+                    ] as const).map(({ id, label, icon: Icon, desc }) => (
+                      <button
+                        key={id}
                         type="button"
-                        onClick={handleSendEmailOtp}
-                        className="rounded-xl text-xs font-bold px-4"
+                        onClick={() => setTheme(id)}
+                        className={`flex flex-col items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-150 ${
+                          theme === id
+                            ? "border-primary bg-primary/10 shadow-soft"
+                            : "border-border bg-card hover:bg-secondary/40"
+                        }`}
                       >
-                        Send Security Code
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4 animate-in fade-in">
-                      <div>
-                        <p className="text-xs font-bold text-foreground">
-                          Enter 6-digit code sent to {user?.email}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          New Email: <span className="font-bold text-primary">{newEmail}</span>
-                        </p>
-                      </div>
-
-                      {/* 6-box OTP input */}
-                      <div className="flex items-center gap-2">
-                        {emailOtp.map((digit, idx) => (
-                          <input
-                            key={idx}
-                            id={`otp-${idx}`}
-                            type="text"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, "");
-                              const next = [...emailOtp];
-                              next[idx] = val;
-                              setEmailOtp(next);
-                              if (val && idx < 5) {
-                                document.getElementById(`otp-${idx + 1}`)?.focus();
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Backspace" && !digit && idx > 0) {
-                                document.getElementById(`otp-${idx - 1}`)?.focus();
-                              }
-                            }}
-                            className="h-10 w-10 rounded-xl border border-border bg-card text-center font-mono text-sm font-bold text-foreground outline-none focus:border-primary"
-                          />
-                        ))}
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <button
-                          type="button"
-                          disabled={otpCountdown > 0}
-                          onClick={handleSendEmailOtp}
-                          className="text-[11px] font-bold text-primary hover:underline disabled:text-muted-foreground"
-                        >
-                          {otpCountdown > 0 ? `Resend Code in ${otpCountdown}s` : "Resend Security Code"}
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsEmailOtpSent(false)}
-                            className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-                          >
-                            Cancel
-                          </button>
-                          <Button
-                            type="button"
-                            disabled={isVerifyingEmail}
-                            onClick={handleVerifyAndUpdateEmail}
-                            className="rounded-xl text-xs font-bold px-4"
-                          >
-                            {isVerifyingEmail ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              "Verify & Update Email"
-                            )}
-                          </Button>
+                        <div className={`grid h-9 w-9 place-items-center rounded-xl ${theme === id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                          <Icon className="h-4 w-4" />
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Password Reset ── */}
-                <div className="rounded-2xl border border-border bg-background/50 p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <KeyRound className="h-4 w-4 text-primary" />
-                        <h3 className="text-xs font-bold text-foreground">Password & Authentication</h3>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Trigger a secure password reset link to your email inbox.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isResettingPassword}
-                      onClick={handlePasswordReset}
-                      className="rounded-xl text-xs font-bold"
-                    >
-                      {isResettingPassword ? "Sending..." : "Send Reset Link"}
-                    </Button>
+                        <div>
+                          <p className={`text-sm font-bold ${theme === id ? "text-primary" : "text-foreground"}`}>{label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
+                        </div>
+                        {theme === id && (
+                          <span className="ml-auto self-start rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground">Active</span>
+                        )}
+                      </button>
+                    ))}
                   </div>
+                </FieldSection>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════ */}
+            {/*  ACCOUNT                                     */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "account" && (
+              <div className="space-y-8 max-w-2xl">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Account</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">Manage your account identity and credentials.</p>
                 </div>
 
-                {/* ── Instagram-Style Temporary Deactivation ── */}
-                <div className="rounded-2xl border border-border bg-background/50 p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <FieldSection title="Account Identity" icon={UserCircle}>
+                  <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
+                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">
+                      {initials}
+                    </div>
                     <div>
-                      <h3 className="text-xs font-bold text-foreground">Temporarily Deactivate Account</h3>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 max-w-lg leading-relaxed">
-                        Taking a break? Your profile, listings, and messages will be hidden until you reactivate by logging back in.
+                      <p className="text-base font-bold text-foreground">{displayName}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                      {profile?.college_name && (
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">{profile.college_name}</p>
+                      )}
+                    </div>
+                  </div>
+                </FieldSection>
+
+                {/* Deactivate */}
+                <FieldSection title="Account Status" icon={Eye}>
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-card p-5">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Temporarily Deactivate</p>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-md">
+                        Your profile and listings will be hidden. Log back in anytime to reactivate — no data is lost.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeactivateModal(true)}
-                      className="rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-foreground hover:bg-secondary/80 transition-colors"
-                    >
+                    <button type="button" onClick={() => setShowDeactivateModal(true)}
+                      className="shrink-0 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-foreground hover:bg-secondary/70 transition-colors">
                       Deactivate
                     </button>
                   </div>
-                </div>
+                </FieldSection>
 
-                {/* ── Instagram-Style Permanent Account Deletion ── */}
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                {/* Delete */}
+                <FieldSection title="Danger Zone" icon={AlertTriangle}>
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
                     <div>
-                      <h3 className="text-xs font-bold text-destructive flex items-center gap-1.5">
-                        <AlertTriangle className="h-4 w-4" />
-                        Delete Account Permanently
-                      </h3>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 max-w-lg leading-relaxed">
-                        If you delete your account, all your campus posts, notes, listings, chats, and ratings will be erased permanently after 30 days.
+                      <p className="text-sm font-bold text-destructive">Delete Account Permanently</p>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-md">
+                        All data — notes, listings, ratings, chats — will be permanently deleted after a 30-day grace period. This cannot be undone.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteModal(true)}
-                      className="rounded-xl bg-destructive px-3.5 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity"
-                    >
+                    <button type="button" onClick={() => setShowDeleteModal(true)}
+                      className="shrink-0 rounded-xl bg-destructive px-3.5 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity">
                       Delete Account
                     </button>
                   </div>
+                </FieldSection>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════ */}
+            {/*  SECURITY                                    */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "security" && (
+              <div className="space-y-8 max-w-2xl">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Security</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">Protect your account with verified email changes and password security.</p>
+                </div>
+
+                {/* Email change */}
+                <FieldSection title="Email Address" icon={Mail}>
+                  <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Current Email</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">{user?.email}</p>
+                    </div>
+
+                    {!isEmailOtpSent ? (
+                      <div className="flex flex-col sm:flex-row gap-2.5">
+                        <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="New email address" className="settings-input flex-1" />
+                        <Button type="button" onClick={handleSendEmailOtp} className="shrink-0 rounded-xl font-bold">
+                          Send Code
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4 animate-in fade-in">
+                        <p className="text-xs font-bold text-foreground">Enter 6-digit code sent to <span className="text-primary">{user?.email}</span></p>
+                        <div className="flex gap-2">
+                          {emailOtp.map((digit, idx) => (
+                            <input key={idx} id={`otp-${idx}`} type="text" maxLength={1} value={digit}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, "");
+                                const next = [...emailOtp]; next[idx] = val; setEmailOtp(next);
+                                if (val && idx < 5) document.getElementById(`otp-${idx + 1}`)?.focus();
+                              }}
+                              onKeyDown={(e) => { if (e.key === "Backspace" && !digit && idx > 0) document.getElementById(`otp-${idx - 1}`)?.focus(); }}
+                              className="h-10 w-10 rounded-xl border border-border bg-card text-center font-mono text-sm font-bold text-foreground outline-none focus:border-primary"
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <button type="button" disabled={otpCountdown > 0} onClick={handleSendEmailOtp}
+                            className="text-xs font-bold text-primary hover:underline disabled:text-muted-foreground">
+                            {otpCountdown > 0 ? `Resend in ${otpCountdown}s` : "Resend Code"}
+                          </button>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => setIsEmailOtpSent(false)} className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground">Cancel</button>
+                            <Button type="button" disabled={isVerifyingEmail} onClick={handleVerifyEmail} className="rounded-xl text-xs font-bold">
+                              {isVerifyingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Verify & Update"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </FieldSection>
+
+                {/* Password */}
+                <FieldSection title="Password" icon={Lock}>
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Reset Password</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">A secure reset link will be sent to your email inbox.</p>
+                    </div>
+                    <Button type="button" variant="outline" disabled={isResettingPassword} onClick={handlePasswordReset} className="shrink-0 rounded-xl font-bold text-xs">
+                      {isResettingPassword ? "Sending…" : "Send Reset Link"}
+                    </Button>
+                  </div>
+                </FieldSection>
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════ */}
+            {/*  CONNECTED ACCOUNTS                          */}
+            {/* ════════════════════════════════════════════ */}
+            {displaySection === "connected" && (
+              <div className="space-y-8 max-w-2xl">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Connected Accounts</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">Link external accounts to enhance your campus profile and verify your identity.</p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { name: "Google", icon: Globe, desc: "Enable one-tap sign-in with your Google account.", connected: true },
+                    { name: "GitHub", icon: FolderGit2, desc: "Showcase your repositories on your campus profile.", connected: false },
+                    { name: "LinkedIn", icon: Link2, desc: "Import your education and internship history.", connected: false },
+                    { name: "Phone Number", icon: Phone, desc: "Add your phone for WhatsApp and ride coordination.", connected: !!profile?.phone },
+                  ].map(({ name, icon: Icon, desc, connected }) => (
+                    <div key={name} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-secondary text-foreground">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{name}</p>
+                          <p className="text-xs text-muted-foreground">{desc}</p>
+                        </div>
+                      </div>
+                      <button type="button"
+                        className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                          connected
+                            ? "border border-border bg-secondary text-foreground hover:bg-secondary/70"
+                            : "bg-primary text-primary-foreground hover:opacity-90"
+                        }`}>
+                        {connected ? "Connected" : "Connect"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
+
           </div>
         </div>
       </div>
 
-      {/* ── Deactivate Account Modal (Instagram Style) ── */}
+      {/* ── DEACTIVATE MODAL ── */}
       {showDeactivateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-mega text-card-foreground">
-            <h3 className="text-base font-black text-foreground">
-              Temporarily Deactivate Account
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Your campus listings and messages will be hidden until you log back in.
-            </p>
-
-            <div className="mt-4 space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground">
-                  Why are you deactivating your account?
-                </label>
-                <select
-                  value={deactivateReason}
-                  onChange={(e) => setDeactivateReason(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none focus:border-primary"
-                >
-                  <option value="">Select a reason...</option>
-                  <option value="exam-break">Focusing on exams / Taking a break</option>
-                  <option value="privacy">Privacy concerns</option>
-                  <option value="secondary-account">Created a secondary account</option>
-                  <option value="busy">Too busy with college schedule</option>
-                  <option value="other">Something else</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground">
-                  To continue, please re-enter your password
-                </label>
-                <input
-                  type="password"
-                  value={deactivatePassword}
-                  onChange={(e) => setDeactivatePassword(e.target.value)}
-                  placeholder="Enter your current password"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none focus:border-primary"
-                />
-              </div>
+        <Modal onClose={() => setShowDeactivateModal(false)}>
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-base font-black text-foreground">Temporarily Deactivate Account</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Your profile and listings will be hidden until you log back in.</p>
             </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeactivateModal(false)}
-                className="rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary"
-              >
-                Cancel
-              </button>
-              <Button
-                type="button"
-                disabled={isDeactivating}
-                onClick={handleDeactivateAccount}
-                className="rounded-xl bg-foreground text-background text-xs font-bold px-4 hover:opacity-90"
-              >
+            <div className="space-y-1.5">
+              <FieldLabel>Why are you deactivating?</FieldLabel>
+              <select value={deactivateReason} onChange={(e) => setDeactivateReason(e.target.value)} className="settings-input">
+                <option value="">Select a reason…</option>
+                <option value="break">Focusing on exams / Taking a break</option>
+                <option value="privacy">Privacy concerns</option>
+                <option value="busy">Too busy with schedule</option>
+                <option value="other">Something else</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel>Confirm your password</FieldLabel>
+              <input type="password" value={deactivatePassword} onChange={(e) => setDeactivatePassword(e.target.value)} placeholder="Enter current password" className="settings-input" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowDeactivateModal(false)} className="rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary">Cancel</button>
+              <Button type="button" disabled={isDeactivating} onClick={handleDeactivate} className="rounded-xl font-bold">
                 {isDeactivating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Deactivate Account"}
               </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* ── Permanent Delete Modal (Instagram Style) ── */}
+      {/* ── DELETE MODAL ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-destructive/40 bg-card p-6 shadow-mega text-card-foreground">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              <h3 className="text-base font-black">Delete Account Permanently</h3>
+        <Modal onClose={() => setShowDeleteModal(false)} danger>
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-base font-black text-destructive flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Delete Account Permanently
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                All your campus data will be permanently erased after 30 days. This action cannot be undone.
+              </p>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-              Are you sure you want to delete <span className="font-bold text-foreground">{user?.email}</span>? All your student profile data, ratings, and listings will be permanently erased.
-            </p>
-
-            <div className="mt-4 space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground">
-                  Why are you deleting your account?
-                </label>
-                <select
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none focus:border-destructive"
-                >
-                  <option value="">Select a reason...</option>
-                  <option value="graduated">Graduated / Left Campus</option>
-                  <option value="privacy">Privacy concerns</option>
-                  <option value="not-useful">Not finding it useful</option>
-                  <option value="other">Other reason</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground">
-                  Enter password to confirm permanent deletion
-                </label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none focus:border-destructive"
-                />
-              </div>
+            <div className="rounded-xl bg-destructive/10 border border-destructive/30 p-3 text-xs text-destructive leading-relaxed">
+              Deleting: <strong>{user?.email}</strong>
             </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleDeleteAccount}
-                className="rounded-xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity"
-              >
+            <div className="space-y-1.5">
+              <FieldLabel>Confirm your password to proceed</FieldLabel>
+              <input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Enter current password" className="settings-input" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowDeleteModal(false)} className="rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary">Cancel</button>
+              <button type="button" disabled={isDeleting} onClick={handleDelete}
+                className="rounded-xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground hover:opacity-90 transition-opacity disabled:opacity-60">
                 {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Delete Permanently"}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </main>
+  );
+}
+
+/* ── SMALL REUSABLE COMPONENTS ── */
+
+function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      onClick={() => onChange(!enabled)}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${enabled ? "bg-primary" : "bg-secondary"}`}
+    >
+      <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ${enabled ? "translate-x-4" : "translate-x-0"}`} />
+    </button>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="text-xs font-bold text-muted-foreground">{children}</label>;
+}
+
+function FieldSection({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+        <Icon className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-black text-foreground">{title}</h3>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function SuggestionDropdown({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute top-full left-0 right-0 z-30 mt-1.5 max-h-52 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-mega">
+      {children}
+    </div>
+  );
+}
+
+function SuggestionItem({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-foreground hover:bg-secondary transition-colors">
+      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+
+function Modal({ children, onClose, danger }: { children: React.ReactNode; onClose: () => void; danger?: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className={`relative w-full max-w-md rounded-2xl border ${danger ? "border-destructive/40" : "border-border"} bg-card p-6 shadow-mega text-card-foreground`}>
+        <button type="button" onClick={onClose}
+          className="absolute right-4 top-4 grid h-7 w-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+          <X className="h-4 w-4" />
+        </button>
+        {children}
+      </div>
+    </div>
   );
 }

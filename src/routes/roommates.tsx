@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
-import { SiteNav } from "@/components/SiteNav";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import student1 from "@/assets/student-1.jpg";
@@ -893,7 +892,6 @@ function RoommatesContent() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      {activeMode === "home" && <SiteNav />}
 
       {activeMode === "home" && (
         <section className="mx-auto grid max-w-7xl gap-4 px-4 py-6 lg:grid-cols-2">
