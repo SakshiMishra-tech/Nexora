@@ -64,7 +64,12 @@ export function ModuleAccessBoundary({
   );
 
   useEffect(() => {
-    if (!user || loading) return;
+    if (loading) return;
+
+    if (!user) {
+      void navigate({ to: AUTH_ROUTES.login, replace: true });
+      return;
+    }
 
     getUserSettings(user.id).then((settings) => {
       if (settings && isModuleEnabled(settings, moduleId) === false) {
@@ -74,10 +79,10 @@ export function ModuleAccessBoundary({
       }
       setChecked(true);
     });
-  }, [moduleId, user, loading]);
+  }, [moduleId, user, loading, navigate]);
 
   // Still loading — render nothing so no flash
-  if (!checked) return null;
+  if (loading || (!user && !loading) || !checked) return null;
 
   // Module is disabled: render children + overlay popup on top.
   // We do NOT navigate away. The popup sits on top of whatever page is shown.
