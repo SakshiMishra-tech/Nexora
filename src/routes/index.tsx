@@ -185,9 +185,9 @@ function Index() {
           <div className="absolute right-4 top-4 rotate-2 bg-warm px-3 py-1 text-[11px] font-black uppercase text-warm-foreground shadow-soft">
             student built
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-black uppercase text-success">
-            <Sparkles className="h-3.5 w-3.5" />
-            Nexora campus system
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-xs font-black tracking-wide text-primary shadow-xs">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" />
+            <span>Next-Gen Campus Network</span>
           </span>
           <h1 className="mt-5 max-w-3xl font-display text-5xl font-black leading-[0.96] sm:text-7xl">
             Choose what you need on campus.

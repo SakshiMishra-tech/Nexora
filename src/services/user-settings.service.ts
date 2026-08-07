@@ -66,7 +66,7 @@ export async function getUserSettings(
 export function getEnabledModules(
   settings: UserSettingsRow | null | undefined,
 ): CampusModuleId[] {
-  if (!settings) return [];
+  if (!settings) return CAMPUS_MODULES.map((m) => m.id);
 
   return CAMPUS_MODULES.map((m) => m.id).filter((id) => {
     const col = MODULE_COLUMN_MAP[id] as keyof UserSettingsRow;
@@ -83,7 +83,7 @@ export function isModuleEnabled(
   settings: UserSettingsRow | null | undefined,
   moduleId: CampusModuleId,
 ): boolean {
-  if (!settings) return false;
+  if (!settings) return true;
   const col = MODULE_COLUMN_MAP[moduleId] as keyof UserSettingsRow;
   const value = settings[col];
   return value !== false;

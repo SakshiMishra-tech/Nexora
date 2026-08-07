@@ -2,7 +2,8 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Nexora design system - a vibrant, hand-crafted student ecosystem.
@@ -128,26 +129,34 @@
 }
 
 .dark {
-  --background: oklch(0.16 0.04 275);
+  --background: oklch(0.14 0.035 275);
   --foreground: oklch(0.97 0.01 95);
-  --paper: oklch(0.2 0.04 275);
-  --card: oklch(0.22 0.05 275);
+  --paper: oklch(0.18 0.035 275);
+  --card: oklch(0.20 0.04 275);
   --card-foreground: oklch(0.97 0.01 95);
-  --popover: oklch(0.22 0.05 275);
+  --popover: oklch(0.20 0.04 275);
   --popover-foreground: oklch(0.97 0.01 95);
-  --primary: oklch(0.7 0.2 250);
-  --primary-foreground: oklch(0.16 0.04 275);
-  --secondary: oklch(0.28 0.06 275);
+  --primary: oklch(0.72 0.18 250);
+  --primary-foreground: oklch(0.12 0.035 275);
+  --secondary: oklch(0.25 0.04 275);
   --secondary-foreground: oklch(0.97 0.01 95);
-  --muted: oklch(0.28 0.05 275);
-  --muted-foreground: oklch(0.72 0.03 270);
-  --accent: oklch(0.32 0.08 250);
+  --muted: oklch(0.23 0.03 275);
+  --muted-foreground: oklch(0.75 0.025 270);
+  --accent: oklch(0.30 0.06 250);
   --accent-foreground: oklch(0.97 0.01 95);
-  --border: oklch(1 0 0 / 10%);
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.99 0.006 95);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.2 250);
-  --glass-bg: oklch(0.22 0.05 275 / 0.55);
-  --glass-border: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.72 0.18 250);
+  --glass-bg: oklch(0.20 0.04 275 / 0.7);
+  --glass-border: oklch(1 0 0 / 0.12);
+  --gradient-aurora: radial-gradient(60% 80% at 10% 0%, oklch(0.35 0.12 250 / 0.35), transparent 60%),
+                     radial-gradient(50% 70% at 90% 10%, oklch(0.40 0.12 55 / 0.25), transparent 60%),
+                     radial-gradient(70% 80% at 50% 110%, oklch(0.30 0.1 160 / 0.25), transparent 60%);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.25), 0 8px 24px -8px oklch(0 0 0 / 0.45);
+  --shadow-glow: 0 20px 60px -20px oklch(0.72 0.18 250 / 0.3);
+  --shadow-warm: 0 20px 60px -20px oklch(0.74 0.17 55 / 0.3);
 }
 
 @layer base {
@@ -161,6 +170,11 @@
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
+  }
+
+  select option {
+    background-color: var(--color-card);
+    color: var(--color-foreground);
   }
 
   h1, h2, h3, h4, .font-display {
@@ -2776,7 +2790,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: oklch(0.18 0.05 270 / 0.18);
+  background: oklch(0 0 0 / 0.5);
   padding: 1rem;
   backdrop-filter: blur(8px);
   animation: module-overlay-in 180ms ease both;
@@ -2788,12 +2802,13 @@
   width: min(100%, 520px);
   gap: 0.85rem;
   margin-top: 0.75rem;
-  border: 1px solid oklch(1 0 0 / 0.72);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: linear-gradient(145deg, oklch(1 0 0 / 0.92), oklch(0.99 0.006 95 / 0.8));
-  padding: 1rem;
-  box-shadow: 0 24px 70px -36px oklch(0.18 0.05 270 / 0.72);
-  backdrop-filter: blur(22px) saturate(150%);
+  background: var(--color-card);
+  color: var(--color-card-foreground);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-glow);
+  backdrop-filter: blur(22px);
   animation: module-card-in 220ms ease both;
 }
 
@@ -2805,9 +2820,9 @@
   width: 2rem;
   aspect-ratio: 1;
   place-items: center;
-  border: 1px solid oklch(0.9 0.015 270 / 0.72);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: oklch(1 0 0 / 0.72);
+  background: var(--color-secondary);
   color: var(--color-muted-foreground);
 }
 
@@ -2826,7 +2841,7 @@
   margin-top: 0.25rem;
   color: var(--color-foreground);
   font-size: 0.95rem;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.45;
 }
 
@@ -2835,549 +2850,46 @@
   justify-content: flex-end;
 }
 
-/* Premium Nexora authentication surface. */
-.auth-student-page {
-  isolation: isolate;
-  position: relative;
-  min-height: 100svh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background:
-    radial-gradient(circle at 16% 12%, oklch(0.66 0.21 250 / 0.24), transparent 34%),
-    radial-gradient(circle at 88% 10%, oklch(0.7 0.16 160 / 0.16), transparent 28%),
-    linear-gradient(135deg, oklch(0.15 0.05 275), oklch(0.23 0.08 260) 44%, oklch(0.92 0.05 250));
+/* Modern Nexora Startup Authentication Experience */
+.auth-startup-wrap {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.auth-page-illustration {
-  position: absolute;
-  inset: 0;
-  z-index: -3;
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-  opacity: 0.22;
-  filter: saturate(0.9) contrast(1.05);
-  transform: scale(1.03);
+.auth-startup-wrap::-webkit-scrollbar {
+  display: none;
 }
 
-.auth-page-wash {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background:
-    linear-gradient(135deg, oklch(0.12 0.04 275 / 0.72), oklch(0.2 0.08 250 / 0.42)),
-    linear-gradient(180deg, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0.24));
-  backdrop-filter: blur(4px);
+/* Dark Autofill Fix - prevents ugly white browser autofill box */
+.auth-startup-wrap input:-webkit-autofill,
+.auth-startup-wrap input:-webkit-autofill:hover, 
+.auth-startup-wrap input:-webkit-autofill:focus, 
+.auth-startup-wrap input:-webkit-autofill:active {
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  box-shadow: inset 0 0 20px 20px #0f172a !important;
+  caret-color: #f8fafc !important;
+  border-radius: inherit !important;
 }
 
-.auth-student-layout {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: clamp(0.75rem, 2vw, 1.4rem);
-}
-
-.auth-glass-card {
-  width: min(92vw, 800px);
-  max-height: none;
-  overflow: hidden;
-  border: 1px solid oklch(1 0 0 / 0.48);
-  border-radius: 24px;
-  background:
-    linear-gradient(145deg, oklch(1 0 0 / 0.76), oklch(0.96 0.02 250 / 0.62));
-  padding: clamp(0.95rem, 1.8vw, 1.2rem);
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.72),
-    0 28px 90px -44px oklch(0.05 0.03 275 / 0.9);
-  backdrop-filter: blur(24px) saturate(145%);
-}
-
-.auth-glass-card::before {
-  content: none;
-}
-
-.auth-brand-header {
-  display: grid;
-  place-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.7rem;
-  text-align: center;
-}
-
-.auth-brand-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--color-foreground);
-}
-
-.auth-brand-mark span {
-  display: grid;
-  height: 2.35rem;
-  width: 2.35rem;
-  place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-electric));
-  color: var(--color-primary-foreground);
-  box-shadow: var(--shadow-soft);
-}
-
-.auth-brand-mark strong {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 1000;
-}
-
-.auth-brand-header p,
-.auth-terms-copy,
-.auth-otp-copy {
-  color: var(--color-muted-foreground);
-  font-size: 0.8rem;
-  font-weight: 800;
-  line-height: 1.55;
-}
-
-.auth-copy-block {
-  margin-bottom: 0.6rem;
-  text-align: center;
-}
-
-.auth-copy-block h1 {
-  font-family: var(--font-display);
-  font-size: clamp(1.65rem, 4vw, 1.95rem);
-  font-weight: 1000;
-  line-height: 1.08;
-}
-
-.auth-status-message {
-  margin-bottom: 0.6rem;
-  border-radius: 12px;
-  border: 1px solid;
-  padding: 0.6rem 0.7rem;
-  font-size: 0.78rem;
-  font-weight: 900;
-  line-height: 1.4;
-}
-
-.auth-status-error {
-  border-color: oklch(0.62 0.24 27 / 0.26);
-  background: oklch(0.62 0.24 27 / 0.1);
-  color: var(--color-destructive);
-}
-
-.auth-status-info {
-  border-color: oklch(0.7 0.16 160 / 0.26);
-  background: oklch(0.7 0.16 160 / 0.12);
-  color: oklch(0.35 0.12 160);
-}
-
-.auth-form-stack {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.auth-signup-grid {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.auth-signup-row {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.auth-signup-grid-item {
-  width: 100%;
-  min-width: 0;
-}
-
-.auth-password-hints {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.24rem 0.45rem;
-  max-width: 24rem;
-  margin-top: 0.32rem;
-}
-
-.auth-password-hints span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-radius: 999px;
-  background: transparent;
-  padding: 0;
-  color: var(--color-muted-foreground);
-  font-size: 0.68rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.auth-password-hints span.is-valid {
-  background: oklch(0.7 0.16 160 / 0.14);
-  color: oklch(0.35 0.12 160);
-}
-
-.auth-field {
-  display: grid;
-  gap: 0.3rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-  box-shadow: none;
-}
-
-.auth-field:focus-within {
-  background: transparent;
-  box-shadow: none;
-  transform: none;
-}
-
-.auth-field > span {
-  color: var(--color-foreground);
-  font-size: 0.73rem;
-  font-weight: 900;
-  text-transform: none;
-}
-
-.auth-input-shell {
-  display: grid;
-  min-height: 56px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
-  border: 1px solid oklch(0.9 0.015 270 / 0.76);
-  border-radius: 14px;
-  background: oklch(1 0 0 / 0.72);
-  padding: 0 0.85rem;
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.82);
-  transition: border-color 170ms ease, box-shadow 170ms ease, background 170ms ease;
-}
-
-.auth-field:focus-within .auth-input-shell {
-  border-color: oklch(0.66 0.21 250 / 0.75);
-  background: oklch(1 0 0 / 0.9);
-  box-shadow:
-    0 0 0 4px oklch(0.66 0.21 250 / 0.12),
-    inset 0 1px 0 oklch(1 0 0 / 0.9);
-}
-
-.auth-field-help {
-  margin: 0;
-  color: var(--color-muted-foreground);
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1.45;
-}
-
-.auth-input-shell i,
-.auth-input-shell > svg {
-  display: grid;
-  flex-shrink: 0;
-  color: var(--color-muted-foreground);
-}
-
-.auth-input-shell input {
-  margin: 0;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--color-foreground);
-  font-size: 0.92rem;
-  font-weight: 800;
-  outline: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.auth-input-shell input::placeholder {
-  color: oklch(0.48 0.03 270 / 0.58);
-}
-
-.auth-password-toggle {
-  display: grid;
-  height: 2.05rem;
-  width: 2.05rem;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--color-muted-foreground);
-  transition: background 160ms ease, color 160ms ease;
-}
-
-.auth-password-toggle:hover {
-  background: var(--color-secondary);
-  color: var(--color-foreground);
-}
-
-.auth-submit-btn {
-  display: inline-flex;
-  min-height: 48px;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  border-radius: 14px;
-  background: linear-gradient(135deg, oklch(0.16 0.05 275), var(--color-primary), var(--color-electric));
-  padding: 0.68rem 1rem;
-  color: var(--color-primary-foreground);
-  font-size: 0.95rem;
-  font-weight: 1000;
-  box-shadow: 0 16px 40px -24px oklch(0.18 0.05 270 / 0.85);
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
-}
-
-.auth-submit-btn:hover {
-  transform: translateY(-1px);
-  filter: saturate(1.08);
-  box-shadow: 0 20px 48px -28px oklch(0.18 0.05 270 / 0.95);
-}
-
-.auth-submit-btn:disabled,
-.auth-oauth-btn:disabled,
-.auth-text-link:disabled,
-.auth-resend-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
-.auth-text-link,
-.auth-switch-link,
-.auth-terms-copy a,
-.auth-resend-btn {
-  color: var(--color-primary);
-  font-weight: 1000;
-}
-
-.auth-terms-copy {
-  margin: 0.75rem auto 0;
-  max-width: 22rem;
-  text-align: center;
-}
-
-.auth-inline-link {
-  color: var(--color-primary);
-  font-weight: 1000;
-  text-decoration: underline;
-  text-underline-offset: 0.16rem;
-}
-
-.auth-policy-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: oklch(0.12 0.04 275 / 0.54);
-  backdrop-filter: blur(8px);
-}
-
-.auth-policy-modal {
-  width: min(92vw, 560px);
-  max-height: min(84svh, 640px);
-  display: grid;
-  gap: 0.9rem;
-  border: 1px solid oklch(1 0 0 / 0.58);
-  border-radius: 24px;
-  background: linear-gradient(145deg, oklch(1 0 0 / 0.9), oklch(0.97 0.018 250 / 0.78));
-  padding: 1rem;
-  box-shadow: 0 30px 90px -38px oklch(0.18 0.05 270 / 0.8);
-  backdrop-filter: blur(24px) saturate(150%);
-}
-
-.auth-policy-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.8rem;
-}
-
-.auth-policy-eyebrow {
-  margin: 0 0 0.15rem;
-  color: var(--color-primary);
-  font-size: 0.7rem;
-  font-weight: 1000;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.auth-policy-header h2 {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 1000;
-}
-
-.auth-policy-close {
-  display: grid;
-  height: 2.2rem;
-  width: 2.2rem;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid oklch(0.9 0.015 270 / 0.76);
-  background: oklch(1 0 0 / 0.72);
-  color: var(--color-muted-foreground);
-}
-
-.auth-policy-content {
-  display: grid;
-  gap: 0.7rem;
-  overflow-y: auto;
-  padding-right: 0.2rem;
-  color: var(--color-muted-foreground);
-  font-size: 0.9rem;
-  font-weight: 800;
-  line-height: 1.65;
-}
-
-.auth-policy-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.6rem;
-}
-
-.auth-policy-secondary {
-  min-height: 42px;
-  border-radius: 13px;
-  border: 1px solid oklch(0.9 0.015 270 / 0.76);
-  background: oklch(1 0 0 / 0.8);
-  padding: 0.6rem 0.9rem;
-  color: var(--color-foreground);
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.auth-policy-primary {
-  width: auto;
-  min-width: 160px;
-}
-
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin: 0.65rem 0 0.7rem;
-  color: var(--color-muted-foreground);
-  font-size: 0.72rem;
-  font-weight: 1000;
-}
-
-.auth-divider span {
-  height: 1px;
-  flex: 1;
-  background: var(--color-border);
-}
-
-.auth-oauth-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.55rem;
-}
-
-.auth-oauth-btn {
-  display: inline-flex;
-  min-height: 46px;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  border: 1px solid oklch(0.9 0.015 270 / 0.82);
-  border-radius: 13px;
-  background: oklch(1 0 0 / 0.68);
-  padding: 0.6rem 0.8rem;
-  color: var(--color-foreground);
-  font-size: 0.9rem;
-  font-weight: 950;
-  box-shadow: var(--shadow-soft);
-  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
-}
-
-.auth-oauth-btn:hover {
-  transform: translateY(-1px);
-  border-color: oklch(0.66 0.21 250 / 0.42);
-  background: oklch(1 0 0 / 0.9);
-}
-
-.auth-bottom-copy {
-  margin-top: 0.7rem;
-  text-align: center;
-  color: var(--color-muted-foreground);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.auth-otp-copy {
-  text-align: center;
-}
-
-.auth-otp-copy strong {
-  color: var(--color-foreground);
-}
-
-.auth-otp-shell input {
-  letter-spacing: 0.22em;
-  text-align: center;
-}
-
-.auth-resend-btn {
-  justify-self: center;
-  min-height: 38px;
-  padding: 0.35rem 0.7rem;
-  font-size: 0.86rem;
-}
-
-@media (min-width: 761px) and (max-width: 1024px) {
-  .auth-glass-card {
-    width: min(80vw, 480px);
+@keyframes aurora-shift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(30px, -25px) scale(1.15);
+    opacity: 0.85;
   }
 }
 
-@media (min-width: 768px) {
-  .auth-signup-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+@utility animate-aurora {
+  animation: aurora-shift 10s ease-in-out infinite;
 }
 
-@media (max-width: 640px) {
-  .auth-terms-check .auth-terms-copy {
-    white-space: normal;
-  }
-  .auth-student-page {
-    overflow-y: auto;
-  }
-
-  .auth-student-layout {
-    min-height: 100svh;
-    padding: 0.75rem;
-  }
-
-  .auth-glass-card {
-    width: 92vw;
-    max-height: none;
-    border-radius: 20px;
-    padding: 1rem;
-  }
-
-  .auth-password-hints {
-    grid-template-columns: 1fr;
-  }
-
-  .auth-brand-header {
-    margin-bottom: 0.75rem;
-  }
-
-  .auth-copy-block h1 {
-    font-size: 1.55rem;
-  }
-
-  .auth-input-shell,
-  .auth-oauth-btn,
-  .auth-submit-btn {
-    min-height: 42px;
-  }
-
-  .auth-policy-modal {
-    max-height: 88svh;
-  }
+@utility animate-spin-slow {
+  animation: spin 12s linear infinite;
 }
 
 @utility animate-float {

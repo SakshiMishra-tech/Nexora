@@ -10,9 +10,11 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { AuthProvider } from "../contexts/AuthContext";
+import { SessionManager } from "../components/auth/SessionManager";
 import { Toaster } from "../components/ui/sonner";
 import appCss from "../styles.css?url";
 import { reportAppError } from "../lib/error-reporting";
+import { useTheme } from "../hooks/useTheme";
 
 function NotFoundComponent() {
   return (
@@ -123,10 +125,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SessionManager />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster position="top-right" richColors closeButton />
