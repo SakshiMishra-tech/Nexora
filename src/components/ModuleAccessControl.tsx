@@ -11,8 +11,9 @@ export function useModuleAccessNavigation() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [blockedModule, setBlockedModule] = useState<ReturnType<typeof getModuleByPath> | null>(null);
+  const [clickPos, setClickPos] = useState<{ x: number; y: number } | null>(null);
 
-  const requestModuleAccess = async (path: string) => {
+  const requestModuleAccess = async (path: string, e?: React.MouseEvent) => {
     const module = getModuleByPath(path);
 
     if (!module) {
@@ -27,7 +28,13 @@ export function useModuleAccessNavigation() {
 
     const settings = await getUserSettings(user.id);
     if (settings && !isModuleEnabled(settings, module.id as CampusModuleId)) {
-      // Show popup — do NOT navigate
+      if (e) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        // Position below the clicked element, horizontally centered to the element
+        setClickPos({ x: rect.left + rect.width / 2, y: rect.bottom + 12 });
+      } else {
+        setClickPos(null);
+      }
       setBlockedModule(module);
       return;
     }
@@ -36,7 +43,11 @@ export function useModuleAccessNavigation() {
   };
 
   const accessModal = blockedModule ? (
-    <ModuleAccessModal moduleName={blockedModule.label} onClose={() => setBlockedModule(null)} />
+    <ModuleAccessModal 
+      moduleName={blockedModule.label} 
+      onClose={() => setBlockedModule(null)} 
+      position={clickPos}
+    />
   ) : null;
 
   return { requestModuleAccess, accessModal };
@@ -94,7 +105,7 @@ export function ModuleAccessBoundary({
           {children}
         </div>
 
-        {/* Overlay popup — fixed on top, centred */}
+        {/* Overlay popup — fixed on top, centred. We pass no position so it falls back to a default centered or bottom position */}
         <ModuleAccessModal
           moduleName={module.label}
           onClose={() => {
@@ -114,9 +125,11 @@ export function ModuleAccessBoundary({
 export function ModuleAccessModal({
   moduleName,
   onClose,
+  position,
 }: {
   moduleName: string;
   onClose: () => void;
+  position?: { x: number; y: number } | null;
 }) {
   const navigate = useNavigate();
 
@@ -133,63 +146,97 @@ export function ModuleAccessModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Click outside listener
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      // If they click outside this modal, we close it.
+      // We check if the click target is outside of our dialog container.
+      const el = document.getElementById("module-access-modal-card");
+      if (el && !el.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    // Use capture phase so it triggers even if the inner element stops propagation, 
+    // but give a tiny delay to avoid closing immediately from the click that opened it.
+    const timer = setTimeout(() => {
+      window.addEventListener("click", onClick, true);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("click", onClick, true);
+    };
+  }, [onClose]);
+
+  const style: React.CSSProperties = position
+    ? {
+        position: "fixed",
+        top: position.y,
+        left: position.x,
+        transform: "translateX(-50%)",
+        zIndex: 100,
+      }
+    : {
+        position: "fixed",
+        bottom: "24px",
+        right: "24px",
+        zIndex: 100,
+      };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+      id="module-access-modal-card"
+      style={style}
+      className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-mega text-card-foreground animate-in fade-in slide-in-from-bottom-2 duration-200"
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label="Campus space is not active"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {/* Compact card — smaller than a full modal */}
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-mega text-card-foreground animate-in zoom-in-95 duration-200">
-        {/* Close button */}
+      {/* Close button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-3.5 top-3.5 grid h-7 w-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+        aria-label="Close"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+
+      {/* Content */}
+      <div className="flex items-start gap-3 pr-6">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Lock className="h-4.5 w-4.5" />
+        </div>
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+            {moduleName}
+          </span>
+          <h3 className="mt-0.5 text-sm font-bold text-foreground">
+            This space is currently paused
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            Go to <strong>Settings → Campus Spaces</strong> and turn on{" "}
+            <span className="font-semibold text-foreground">{moduleName}</span> to access it.
+          </p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3.5 top-3.5 grid h-7 w-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          aria-label="Close"
+          className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
         >
-          <X className="h-3.5 w-3.5" />
+          Dismiss
         </button>
-
-        {/* Content */}
-        <div className="flex items-start gap-3 pr-6">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Lock className="h-4.5 w-4.5" />
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-              {moduleName}
-            </span>
-            <h3 className="mt-0.5 text-sm font-bold text-foreground">
-              This space is currently paused
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Go to <strong>Settings → Campus Spaces</strong> and turn on{" "}
-              <span className="font-semibold text-foreground">{moduleName}</span> to access it.
-            </p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
-          >
-            Dismiss
-          </button>
-          <button
-            type="button"
-            onClick={handleGoToSettings}
-            className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            <span>Open Settings</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleGoToSettings}
+          className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          <span>Open Settings</span>
+        </button>
       </div>
     </div>
   );

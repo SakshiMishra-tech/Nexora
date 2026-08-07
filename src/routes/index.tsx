@@ -233,7 +233,7 @@ function Index() {
                 href={feature.href}
                 onClick={(event) => {
                   event.preventDefault();
-                  requestModuleAccess(feature.href);
+                  requestModuleAccess(feature.href, event);
                 }}
                 className={`group paper-lift border border-foreground/10 bg-card p-4 transition hover:-translate-y-1 hover:shadow-glow ${
                   index % 3 === 0 ? "-rotate-1" : index % 3 === 1 ? "rotate-1" : ""
