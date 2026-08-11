@@ -293,7 +293,7 @@ export function SellerDashboard({
               icon={<Package className="h-8 w-8 text-muted-foreground/60" />}
               title="No items here yet"
               description="Add a new campus listing to start tracking clicks, views, and offers!"
-              action={activeTab === "active" ? { label: "Create Listing", onClick: onPostItem } : undefined}
+              action={activeTab === "published" ? { label: "Create Listing", onClick: onPostItem } : undefined}
             />
           )}
         </div>

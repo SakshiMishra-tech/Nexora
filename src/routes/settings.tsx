@@ -214,7 +214,7 @@ function SettingsPage() {
         college: collegeVal,
         branch: draft?.branch || meta.branch || "",
         year: draft?.year || meta.year || "3rd Year",
-        phone: draft?.phone || profile?.phone || meta.phone || "",
+        phone: draft?.phone || (profile as any)?.phone || meta.phone || "",
         city: cityVal,
         state: draft?.state || meta.state || "Delhi NCR",
         pincode: draft?.pincode || meta.pincode || "",
@@ -967,7 +967,7 @@ function SettingsPage() {
                     { name: "Google", icon: Globe, desc: "Enable one-tap sign-in with your Google account.", connected: true },
                     { name: "GitHub", icon: FolderGit2, desc: "Showcase your repositories on your campus profile.", connected: false },
                     { name: "LinkedIn", icon: Link2, desc: "Import your education and internship history.", connected: false },
-                    { name: "Phone Number", icon: Phone, desc: "Add your phone for WhatsApp and ride coordination.", connected: !!profile?.phone },
+                    { name: "Phone Number", icon: Phone, desc: "Add your phone for WhatsApp and ride coordination.", connected: !!(profile as any)?.phone },
                   ].map(({ name, icon: Icon, desc, connected }) => (
                     <div key={name} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
                       <div className="flex items-center gap-3">

@@ -238,7 +238,7 @@ export function SellItemForm({
   // Computed Validation State
   const titleError = values.title.length > 0 && values.title.length < 5 ? "Title must be at least 5 characters." : null;
   const descError = values.description.length > 0 && values.description.length < 25 ? "Description must be at least 25 characters." : null;
-  const priceError = values.price !== 0 && (Number(values.price) < 0 || isNaN(Number(values.price))) ? "Please enter a valid price." : null;
+  const priceError = Number(values.price) !== 0 && (Number(values.price) < 0 || isNaN(Number(values.price))) ? "Please enter a valid price." : null;
 
   const isCategoryValid = !!selectedSubcategory;
   const isDetailsValid = values.title.length >= 5 && values.description.length >= 25 && Number(values.price) >= 0 && !!values.pickupArea;

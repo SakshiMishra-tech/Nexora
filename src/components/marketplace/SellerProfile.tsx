@@ -82,7 +82,7 @@ export function SellerProfile({
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h1 className="font-display text-2xl font-black text-foreground">{sellerName}</h1>
               {sellerRating >= 4.5 && (
-                <CheckCircle2 className="h-5 w-5 text-electric shrink-0" title="Verified student" />
+                <CheckCircle2 className="h-5 w-5 text-electric shrink-0" />
               )}
             </div>
             <p className="text-sm text-muted-foreground mb-3 truncate">{sellerCourse}</p>

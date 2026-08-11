@@ -79,7 +79,7 @@ export function SessionManager() {
         auth?.signOut().then(() => {
           localStorage.removeItem(LAST_ACTIVITY_KEY);
           setShowWarning(false);
-          router.navigate({ to: "/login" });
+          router.navigate({ to: "/auth/login" });
         });
       } else if (timeSinceLastActivity >= WARNING_TRIGGER_MS) {
         // Show warning
@@ -109,7 +109,7 @@ export function SessionManager() {
     auth?.signOut().then(() => {
       localStorage.removeItem(LAST_ACTIVITY_KEY);
       setShowWarning(false);
-      router.navigate({ to: "/login" });
+      router.navigate({ to: "/auth/login" });
     });
   };
 

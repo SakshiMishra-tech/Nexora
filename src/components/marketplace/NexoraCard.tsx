@@ -8,6 +8,7 @@ interface NexoraCardProps {
   isSaved: boolean;
   onSave: (id: string) => void;
   onClick: (id: string) => void;
+  hideSeller?: boolean;
 }
 
 // Category-aware gradient fallback palette
@@ -34,7 +35,7 @@ function CategoryFallback({ category, title }: { category: string; title: string
   );
 }
 
-export function NexoraCard({ listing, isSaved, onSave, onClick }: NexoraCardProps) {
+export function NexoraCard({ listing, isSaved, onSave, onClick, hideSeller }: NexoraCardProps) {
   const isSold = listing.status === "sold";
   const isFree = listing.price === 0;
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -118,7 +119,7 @@ export function NexoraCard({ listing, isSaved, onSave, onClick }: NexoraCardProp
           {listing.title}
         </h3>
         <p className="text-xs text-muted-foreground/80">
-          {timeAgo(listing.createdAt)} · {sellerFirstName}
+          {timeAgo(listing.createdAt)}{!hideSeller && ` · ${sellerFirstName}`}
         </p>
       </div>
     </Link>

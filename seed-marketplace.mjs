@@ -26,13 +26,22 @@ const itemsToInsert = [
     images: ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Operating System Concepts',
+    title: 'Operating System Concepts (10th Ed)',
     description: 'Dinosaur book (10th Edition) for OS. Has some highlights but overall good condition.',
     category: 'Books',
     condition: 'Good',
+    price: 300,
+    location: 'Library Cafe',
+    images: ['https://images.unsplash.com/photo-1589998059171-989d887dda6e?q=80&w=600&auto=format&fit=crop']
+  },
+  {
+    title: 'Database System Concepts (DBMS)',
+    description: 'Standard textbook for DBMS.',
+    category: 'Books',
+    condition: 'Fair',
     price: 350,
     location: 'North Campus',
-    images: ['https://images.unsplash.com/photo-1589998059171-989d887dda6e?q=80&w=600&auto=format&fit=crop']
+    images: ['https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=600&auto=format&fit=crop']
   },
   {
     title: 'DBMS Notes',
@@ -43,7 +52,26 @@ const itemsToInsert = [
     location: 'South Campus',
     images: ['https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=600&auto=format&fit=crop']
   },
+  {
+    title: 'Higher Engineering Mathematics',
+    description: 'BS Grewal, excellent condition.',
+    category: 'Books',
+    condition: 'Like New',
+    price: 500,
+    location: 'Visvesvaraya Hostel',
+    images: ['https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=600&auto=format&fit=crop']
+  },
+
   // Electronics
+  {
+    title: 'Casio Scientific Calculator FX-991EX',
+    description: 'Classwiz calculator, allowed in exams. Fully working.',
+    category: 'Electronics',
+    condition: 'Good',
+    price: 600,
+    location: 'Bhabha Hostel',
+    images: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?q=80&w=600&auto=format&fit=crop']
+  },
   {
     title: 'Dell Inspiron 15',
     description: 'i5 11th Gen, 16GB RAM, 512GB SSD. Used for 2 years. Battery lasts ~3 hours. Good for coding.',
@@ -71,6 +99,7 @@ const itemsToInsert = [
     location: 'South Campus',
     images: ['https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=600&auto=format&fit=crop']
   },
+
   // Cycles
   {
     title: 'Hero Sprint',
@@ -90,7 +119,17 @@ const itemsToInsert = [
     location: 'North Campus',
     images: ['https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?q=80&w=600&auto=format&fit=crop']
   },
+
   // Hostel Essentials
+  {
+    title: 'Wooden Study Table',
+    description: 'Sturdy table with one drawer.',
+    category: 'Hostel Essentials',
+    condition: 'Good',
+    price: 800,
+    location: 'Visvesvaraya Hostel',
+    images: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=600&auto=format&fit=crop']
+  },
   {
     title: 'Study Lamp',
     description: 'Wipro Garnet 6W LED Table lamp. Adjustable brightness and flexible neck.',
@@ -113,12 +152,22 @@ const itemsToInsert = [
     title: 'Table Fan',
     description: 'Usha table fan, 3 speeds. High air delivery. Useful for summers in hostel.',
     category: 'Hostel Essentials',
-    condition: 'Good',
+    condition: 'Like New',
     price: 900,
     location: 'North Campus',
     images: ['https://images.unsplash.com/photo-1565151443833-28ea0283f514?q=80&w=600&auto=format&fit=crop']
   },
+
   // Fashion
+  {
+    title: 'Denim Jacket (Size M)',
+    description: 'Barely worn, stylish blue denim.',
+    category: 'Fashion',
+    condition: 'Like New',
+    price: 600,
+    location: 'Food Court',
+    images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=600&auto=format&fit=crop']
+  },
   {
     title: 'H&M Black Hoodie (Size L)',
     description: 'Classic black hoodie, barely worn. Very warm for winters.',
@@ -137,20 +186,41 @@ const itemsToInsert = [
     location: 'South Campus',
     images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop']
   },
-  // Academic
+
+  // Sports
   {
-    title: 'Semester 4 CS Notes',
-    description: 'Comprehensive notes for OS, DBMS, Algorithms and Computer Networks. Scored 9 SGPA with these.',
-    category: 'Notes',
+    title: 'Yonex Badminton Racket',
+    description: 'Muscle Power 29. String intact.',
+    category: 'Sports',
     condition: 'Good',
-    price: 300,
-    location: 'North Campus',
-    images: ['https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=600&auto=format&fit=crop']
+    price: 800,
+    location: 'Sports Complex',
+    images: ['https://images.unsplash.com/photo-1611172462310-911252069f16?q=80&w=600&auto=format&fit=crop']
+  },
+  {
+    title: 'Cricket Bat (Kashmir Willow)',
+    description: 'Good stroke, grip needs replacement.',
+    category: 'Sports',
+    condition: 'Good',
+    price: 1000,
+    location: 'Visvesvaraya Hostel',
+    images: ['https://images.unsplash.com/photo-1593766827228-8737b4534aa6?q=80&w=600&auto=format&fit=crop']
+  },
+
+  // Others
+  {
+    title: 'Prestige Electric Cooker',
+    description: '1.5L capacity. Perfect for Maggie and rice.',
+    category: 'Others',
+    condition: 'Good',
+    price: 700,
+    location: 'Aryabhatta Hostel',
+    images: ['https://images.unsplash.com/photo-1544233726-9f1d2b27be8b?q=80&w=600&auto=format&fit=crop']
   },
   {
     title: 'Physics Lab Manuals',
     description: 'Complete set of readings and graphs for first-year physics lab. Verified by TA.',
-    category: 'Academic',
+    category: 'Others', // Fallback for Academic
     condition: 'Fair',
     price: 150,
     location: 'Main Campus',
@@ -170,10 +240,10 @@ async function run() {
   await supabase.from('marketplace_items').delete().neq('seller_id', 'some-non-existent-id');
 
   console.log("Inserting demo items...");
-  
+
   for (let i = 0; i < itemsToInsert.length; i++) {
     const item = itemsToInsert[i];
-    
+
     // Spread created_at dates over the last 30 days
     const daysAgo = Math.floor(Math.random() * 30);
     const date = new Date();

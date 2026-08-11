@@ -147,13 +147,14 @@ function SellerProfilePage() {
           {sellerListings.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
               {sellerListings.map(listing => (
-                <div key={listing.id} onClick={() => navigate({ to: "/marketplace/product/$id", params: { id: listing.id } })}>
+                <div key={listing.id}>
                   <NexoraCard
                     listing={listing}
                     isSaved={savedItems.includes(listing.id)}
                     onSave={(id) => {
                       // Prevent navigation when clicking save
                     }}
+                    onClick={() => navigate({ to: "/marketplace/product/$id", params: { id: listing.id } })}
                     hideSeller={true} // Clean up cards on seller profile
                   />
                 </div>

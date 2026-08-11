@@ -6,10 +6,13 @@ import {
   Loader2,
   Lock,
   Mail,
+  Phone,
   School,
+  Settings,
   ShieldCheck,
   User,
   X,
+  ArrowRight,
 } from "lucide-react";
 import {
   useEffect,

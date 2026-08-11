@@ -462,7 +462,7 @@ export const seedListings: MarketplaceListing[] = [
     id: "seed-14",
     title: 'Physics Lab Manuals',
     description: 'Complete set of readings and graphs for first-year physics lab. Verified by TA.',
-    category: 'Lab Equipment',
+    category: 'Others',
     condition: 'Fair',
     price: 150,
     pickupArea: 'Main Campus',

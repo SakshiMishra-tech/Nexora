@@ -212,17 +212,6 @@ export function validateListingForm(
   const price = Number(values.price);
   if (values.price === "" || isNaN(price) || price < 0) {
     errors.price = "Enter a valid price (0 or greater).";
-  } else {
-    const isFree = values.category === "Free Items";
-    if (isFree) {
-      if (price !== 0) {
-        errors.price = "Free items must be priced at 0.";
-      }
-    } else {
-      if (price <= 0) {
-        errors.price = "Price must be greater than zero. Select category 'Free Items' if it's free.";
-      }
-    }
   }
 
   if (values.originalPrice) {
