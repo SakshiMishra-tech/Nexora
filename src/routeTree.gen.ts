@@ -19,7 +19,6 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MarketplacePremiumRouteImport } from './routes/marketplace-premium'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
-import { Route as LostFoundRouteImport } from './routes/lost-found'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DatingRouteImport } from './routes/dating'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -27,10 +26,15 @@ import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/campus-spaces'
+import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
+import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
 import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as MarketplaceSellerIdRouteImport } from './routes/marketplace_.seller.$id'
+import { Route as MarketplaceProductIdRouteImport } from './routes/marketplace_.product.$id'
+import { Route as MarketplaceChatIdRouteImport } from './routes/marketplace_.chat.$id'
 
 const TuitionRoute = TuitionRouteImport.update({
   id: '/tuition',
@@ -82,11 +86,6 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LostFoundRoute = LostFoundRouteImport.update({
-  id: '/lost-found',
-  path: '/lost-found',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -122,6 +121,16 @@ const OnboardingCampusSpacesRoute = OnboardingCampusSpacesRouteImport.update({
   path: '/onboarding/campus-spaces',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceSettingsRoute = MarketplaceSettingsRouteImport.update({
+  id: '/marketplace_/settings',
+  path: '/marketplace/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceHelpRoute = MarketplaceHelpRouteImport.update({
+  id: '/marketplace_/help',
+  path: '/marketplace/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
   id: '/backup',
   path: '/backup',
@@ -142,6 +151,21 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const MarketplaceSellerIdRoute = MarketplaceSellerIdRouteImport.update({
+  id: '/marketplace_/seller/$id',
+  path: '/marketplace/seller/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceProductIdRoute = MarketplaceProductIdRouteImport.update({
+  id: '/marketplace_/product/$id',
+  path: '/marketplace/product/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceChatIdRoute = MarketplaceChatIdRouteImport.update({
+  id: '/marketplace_/chat/$id',
+  path: '/marketplace/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,7 +174,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
-  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -165,7 +188,12 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
+  '/marketplace/help': typeof MarketplaceHelpRoute
+  '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/marketplace/chat/$id': typeof MarketplaceChatIdRoute
+  '/marketplace/product/$id': typeof MarketplaceProductIdRoute
+  '/marketplace/seller/$id': typeof MarketplaceSellerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,7 +202,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
-  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -189,7 +216,12 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
+  '/marketplace/help': typeof MarketplaceHelpRoute
+  '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/marketplace/chat/$id': typeof MarketplaceChatIdRoute
+  '/marketplace/product/$id': typeof MarketplaceProductIdRoute
+  '/marketplace/seller/$id': typeof MarketplaceSellerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -199,7 +231,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
-  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -214,7 +245,12 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
+  '/marketplace_/help': typeof MarketplaceHelpRoute
+  '/marketplace_/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/marketplace_/chat/$id': typeof MarketplaceChatIdRoute
+  '/marketplace_/product/$id': typeof MarketplaceProductIdRoute
+  '/marketplace_/seller/$id': typeof MarketplaceSellerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -225,7 +261,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
-    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -240,7 +275,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/marketplace/backup'
+    | '/marketplace/help'
+    | '/marketplace/settings'
     | '/onboarding/campus-spaces'
+    | '/marketplace/chat/$id'
+    | '/marketplace/product/$id'
+    | '/marketplace/seller/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -249,7 +289,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
-    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -264,7 +303,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/marketplace/backup'
+    | '/marketplace/help'
+    | '/marketplace/settings'
     | '/onboarding/campus-spaces'
+    | '/marketplace/chat/$id'
+    | '/marketplace/product/$id'
+    | '/marketplace/seller/$id'
   id:
     | '__root__'
     | '/'
@@ -273,7 +317,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
-    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -288,7 +331,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/marketplace/backup'
+    | '/marketplace_/help'
+    | '/marketplace_/settings'
     | '/onboarding/campus-spaces'
+    | '/marketplace_/chat/$id'
+    | '/marketplace_/product/$id'
+    | '/marketplace_/seller/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -298,7 +346,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DatingRoute: typeof DatingRoute
   EventsRoute: typeof EventsRoute
-  LostFoundRoute: typeof LostFoundRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   MarketplacePremiumRoute: typeof MarketplacePremiumRoute
   NotesRoute: typeof NotesRoute
@@ -309,7 +356,12 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   TuitionRoute: typeof TuitionRoute
+  MarketplaceHelpRoute: typeof MarketplaceHelpRoute
+  MarketplaceSettingsRoute: typeof MarketplaceSettingsRoute
   OnboardingCampusSpacesRoute: typeof OnboardingCampusSpacesRoute
+  MarketplaceChatIdRoute: typeof MarketplaceChatIdRoute
+  MarketplaceProductIdRoute: typeof MarketplaceProductIdRoute
+  MarketplaceSellerIdRoute: typeof MarketplaceSellerIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -384,13 +436,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lost-found': {
-      id: '/lost-found'
-      path: '/lost-found'
-      fullPath: '/lost-found'
-      preLoaderRoute: typeof LostFoundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/events': {
       id: '/events'
       path: '/events'
@@ -440,6 +485,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingCampusSpacesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace_/settings': {
+      id: '/marketplace_/settings'
+      path: '/marketplace/settings'
+      fullPath: '/marketplace/settings'
+      preLoaderRoute: typeof MarketplaceSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/help': {
+      id: '/marketplace_/help'
+      path: '/marketplace/help'
+      fullPath: '/marketplace/help'
+      preLoaderRoute: typeof MarketplaceHelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/backup': {
       id: '/marketplace/backup'
       path: '/backup'
@@ -467,6 +526,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/marketplace_/seller/$id': {
+      id: '/marketplace_/seller/$id'
+      path: '/marketplace/seller/$id'
+      fullPath: '/marketplace/seller/$id'
+      preLoaderRoute: typeof MarketplaceSellerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/product/$id': {
+      id: '/marketplace_/product/$id'
+      path: '/marketplace/product/$id'
+      fullPath: '/marketplace/product/$id'
+      preLoaderRoute: typeof MarketplaceProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/chat/$id': {
+      id: '/marketplace_/chat/$id'
+      path: '/marketplace/chat/$id'
+      fullPath: '/marketplace/chat/$id'
+      preLoaderRoute: typeof MarketplaceChatIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -504,7 +584,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DatingRoute: DatingRoute,
   EventsRoute: EventsRoute,
-  LostFoundRoute: LostFoundRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
   MarketplacePremiumRoute: MarketplacePremiumRoute,
   NotesRoute: NotesRoute,
@@ -515,7 +594,12 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   TuitionRoute: TuitionRoute,
+  MarketplaceHelpRoute: MarketplaceHelpRoute,
+  MarketplaceSettingsRoute: MarketplaceSettingsRoute,
   OnboardingCampusSpacesRoute: OnboardingCampusSpacesRoute,
+  MarketplaceChatIdRoute: MarketplaceChatIdRoute,
+  MarketplaceProductIdRoute: MarketplaceProductIdRoute,
+  MarketplaceSellerIdRoute: MarketplaceSellerIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

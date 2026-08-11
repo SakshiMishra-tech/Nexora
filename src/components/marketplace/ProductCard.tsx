@@ -69,7 +69,7 @@ export function ProductCard({ listing, isSaved, onSave, onClick, onChat }: Produ
               FREE
             </span>
           )}
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-soft ring-1 ring-background/60 backdrop-blur-md ${conditionColor}`}>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-soft ring-1 ring-background/60 ${conditionColor}`}>
             {listing.condition}
           </span>
         </div>
@@ -79,18 +79,18 @@ export function ProductCard({ listing, isSaved, onSave, onClick, onChat }: Produ
           type="button"
           onClick={e => { e.stopPropagation(); onSave(listing.id); }}
           aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
-          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border shadow-soft backdrop-blur-md transition-all duration-200 hover:scale-105 ${isSaved ? "border-warm bg-warm text-warm-foreground" : "border-background/70 bg-paper/92 text-foreground hover:border-warm hover:bg-warm hover:text-warm-foreground"}`}
+          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border shadow-soft transition-all duration-200 hover:scale-105 ${isSaved ? "border-warm bg-warm text-warm-foreground" : "border-border bg-background text-foreground hover:border-warm hover:bg-warm hover:text-warm-foreground"}`}
         >
           <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
         </button>
 
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-          <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-paper/92 px-2.5 py-1 text-[10px] font-black text-foreground shadow-soft backdrop-blur-md">
+          <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[10px] font-black text-foreground shadow-soft border border-border">
             <MapPin className="h-3 w-3 shrink-0 text-primary" />
             <span className="truncate">{listing.pickupArea}</span>
           </span>
           {listing.images.length > 1 && (
-            <span className="rounded-full bg-foreground/70 px-2 py-1 text-[10px] font-black text-background backdrop-blur-md">
+            <span className="rounded-full bg-foreground px-2 py-1 text-[10px] font-black text-background">
               {listing.images.length} photos
             </span>
           )}
@@ -102,7 +102,7 @@ export function ProductCard({ listing, isSaved, onSave, onClick, onChat }: Produ
         {/* Price + title */}
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between gap-2">
-            <span className={`font-display text-[1.18rem] font-black leading-none ${isFree ? "text-success" : "text-foreground"}`}>
+            <span className={`font-display text-xl font-black leading-none ${isFree ? "text-success" : "text-foreground"}`}>
               {isFree ? "Free" : formatPrice(listing.price)}
             </span>
             <span className="flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-black text-muted-foreground">
@@ -110,7 +110,7 @@ export function ProductCard({ listing, isSaved, onSave, onClick, onChat }: Produ
               {listing.views}
             </span>
           </div>
-          <h3 className="line-clamp-2 font-display text-[0.95rem] font-black leading-snug text-foreground transition-colors duration-200 group-hover:text-primary">
+          <h3 className="line-clamp-2 font-display text-base font-black leading-snug text-foreground transition-colors duration-200 group-hover:text-primary">
             {listing.title}
           </h3>
         </div>

@@ -145,6 +145,14 @@ export function SellItemForm({
         images: initialValues.images || [],
       });
       setSelectedCategory(initialValues.category || "Books");
+      let initialSubcategory = "";
+      if (initialValues.tags) {
+        const subcategories = SUBCATEGORIES[initialValues.category || "Books"] || [];
+        const tagsList = typeof initialValues.tags === "string" ? initialValues.tags.split(",").map(t => t.trim()) : [];
+        initialSubcategory = subcategories.find(sub => tagsList.includes(sub)) || "";
+      }
+      setSelectedSubcategory(initialSubcategory);
+
       // Deserialize specs
       const specMap: Record<string, string> = {};
       if (initialValues.specifications) {
@@ -154,16 +162,24 @@ export function SellItemForm({
         });
       }
       setSpecs(specMap);
-      setStep("category");
+      
+      if (initialValues.title && initialValues.description && initialValues.price && initialValues.pickupArea) {
+         setStep("media");
+      } else if (initialSubcategory) {
+         setStep("details");
+      } else {
+         setStep("category");
+      }
     } else {
       const saved = localStorage.getItem("nx-listing-draft");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          const restoredImages = (parsed.values.images || []).filter((img: any) => typeof img === "string");
           if (window.confirm("You have an unsaved draft. Would you like to restore it?")) {
             setValues({
               ...parsed.values,
-              images: parsed.values.images || [],
+              images: restoredImages,
             });
             setSelectedCategory(parsed.selectedCategory || "Books");
             setSelectedSubcategory(parsed.selectedSubcategory || "");
@@ -219,38 +235,22 @@ export function SellItemForm({
     setVal("images", imgs.filter((_, i) => i !== idx));
   };
 
-  const handleNext = () => {
-    if (step === "category") {
-      if (!selectedSubcategory) {
-        toast.error("Please select a subcategory first.");
-        return;
-      }
-      setStep("details");
-    } else if (step === "details") {
-      // Validate details, pricing and location inputs before moving forward
-      if (values.title.length < 5) {
-        setErrors({ title: "Title is too short. Minimum 5 characters." });
-        toast.error("Title must be at least 5 characters.");
-        return;
-      }
-      if (values.description.length < 25) {
-        setErrors({ description: "Description is too short. Minimum 25 characters." });
-        toast.error("Description must be at least 25 characters explaining the item.");
-        return;
-      }
-      if (!values.price || Number(values.price) <= 0) {
-        setErrors({ price: "Enter a valid expected price." });
-        toast.error("Please specify a valid expected selling price.");
-        return;
-      }
-      if (!values.pickupArea) {
-        setErrors({ pickupArea: "Pickup spot landmark is required." });
-        toast.error("Please supply a pickup area landmark.");
-        return;
-      }
+  // Computed Validation State
+  const titleError = values.title.length > 0 && values.title.length < 5 ? "Title must be at least 5 characters." : null;
+  const descError = values.description.length > 0 && values.description.length < 25 ? "Description must be at least 25 characters." : null;
+  const priceError = values.price !== 0 && (Number(values.price) < 0 || isNaN(Number(values.price))) ? "Please enter a valid price." : null;
 
-      setErrors({});
-      // Serialize specs to specifications
+  const isCategoryValid = !!selectedSubcategory;
+  const isDetailsValid = values.title.length >= 5 && values.description.length >= 25 && Number(values.price) >= 0 && !!values.pickupArea;
+  const isMediaValid = (values.images?.length || 0) > 0;
+
+  const canContinue = step === "category" ? isCategoryValid : step === "details" ? isDetailsValid : false;
+  const canPost = step === "media" && isMediaValid;
+
+  const handleNext = () => {
+    if (step === "category") setStep("details");
+    else if (step === "details") {
+       // Serialize specs to specifications
       const serialized = Object.entries(specs)
         .filter(([_, v]) => v.trim() !== "")
         .map(([k, v]) => `${k}: ${v}`)
@@ -261,54 +261,31 @@ export function SellItemForm({
   };
 
   const handleBack = () => {
-    if (step === "details") setStep("category");
-    else if (step === "media") setStep("details");
+    if (step === "media") setStep("details");
+    else if (step === "details") setStep("category");
   };
 
-  const handlePublish = async (isDraftMode: boolean) => {
-    const finalValues = { ...values };
-
-    if (isDraftMode) {
-      // Auto-fill minimum draft requirements if they are empty
-      if (!finalValues.title.trim() || finalValues.title.length < 5) {
-        finalValues.title = "Draft - " + (selectedCategory || "Item");
-      }
-      if (!finalValues.description.trim() || finalValues.description.length < 25) {
-        finalValues.description = "Draft listing description. Please update this content with item details.";
-      }
-      if (!finalValues.price || Number(finalValues.price) <= 0) {
-        finalValues.price = "1";
-      }
-      if (!finalValues.pickupArea.trim()) {
-        finalValues.pickupArea = "Campus Handoff";
-      }
+  const handlePublish = async (isDraft: boolean) => {
+    if (!isDraft) {
+      if (!isMediaValid) return; // button should be disabled anyway
     }
-
-    // Run core validation on finalValues
-    const validation = validateListingForm(finalValues, isDraftMode);
-    if (!validation.isValid) {
-      const firstError = Object.values(validation.errors).filter(Boolean)[0];
-      toast.error(firstError || "Please check all required fields.");
-      setErrors(validation.errors);
-      return;
-    }
-
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await onSubmit(finalValues, isDraftMode);
-      localStorage.removeItem("nx-listing-draft");
-      if (!isDraftMode) {
-        toast.success("Listing posted successfully!");
-        setStep("success");
-      } else {
-        toast.success("Draft saved successfully!");
-        onOpenChange(false);
+      const tagsArr = values.tags.split(",").map(t => t.trim()).filter(Boolean);
+      if (selectedSubcategory && !tagsArr.includes(selectedSubcategory)) {
+        tagsArr.push(selectedSubcategory);
       }
-    } catch(err: any) {
-      const msg = err?.message || "An unexpected error occurred.";
-      toast.error(msg);
-      setSubmitError(msg);
+      const finalValues = {
+        ...values,
+        tags: tagsArr.join(", ")
+      };
+      await onSubmit({ ...finalValues, status: isDraft ? "draft" : "active" } as any, isDraft);
+      setStep("success");
+      localStorage.removeItem("nx-listing-draft");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Something went wrong saving the listing.");
     } finally {
       setSubmitting(false);
     }
@@ -415,9 +392,9 @@ export function SellItemForm({
                     placeholder="e.g. HC Verma Physics Vol 1 & 2"
                     value={values.title}
                     onChange={(e) => setVal("title", e.target.value)}
-                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none ${errors.title ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none ${titleError ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
                   />
-                  {errors.title && <p className="text-[10px] font-bold text-destructive">{errors.title}</p>}
+                  {titleError && <p className="text-[10px] font-bold text-destructive">{titleError}</p>}
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
@@ -427,9 +404,9 @@ export function SellItemForm({
                     placeholder="Describe usage period, scratches, highlights, pages missing, or features..."
                     value={values.description}
                     onChange={(e) => setVal("description", e.target.value)}
-                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none resize-none ${errors.description ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
+                    className={`w-full rounded-xl border px-4 py-2.5 text-xs font-semibold outline-none resize-none ${descError ? "border-destructive bg-destructive/5" : "border-border bg-card"}`}
                   />
-                  {errors.description && <p className="text-[10px] font-bold text-destructive">{errors.description}</p>}
+                  {descError && <p className="text-[10px] font-bold text-destructive">{descError}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -627,9 +604,9 @@ export function SellItemForm({
               {step === "media" ? (
                 <button
                   type="button"
-                  disabled={submitting}
+                  disabled={submitting || !canPost}
                   onClick={() => handlePublish(false)}
-                  className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-xs font-black shadow-soft hover:shadow-glow flex items-center gap-1.5"
+                  className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-xs font-black shadow-soft hover:shadow-glow flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                   <span>Post</span>
@@ -637,8 +614,9 @@ export function SellItemForm({
               ) : (
                 <button
                   type="button"
+                  disabled={!canContinue}
                   onClick={handleNext}
-                  className="rounded-xl bg-foreground text-background px-6 py-2.5 text-xs font-black shadow-soft hover:bg-foreground/95 flex items-center gap-1"
+                  className="rounded-xl bg-foreground text-background px-6 py-2.5 text-xs font-black shadow-soft hover:bg-foreground/95 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>Continue</span>
                   <ChevronRight className="h-4 w-4" />

@@ -10,6 +10,7 @@ import {
   formValuesToListing,
   listingToFormValues,
   CURRENT_USER_ID,
+  seedListings,
 } from "@/lib/marketplace";
 import {
   createMarketplaceItem,
@@ -36,7 +37,9 @@ export type MarketplaceView =
   | "detail"
   | "saved"
   | "analytics"
-  | "chats";
+  | "chats"
+  | "settings"
+  | "help";
 
 export type MarketplaceErrorType = "network" | "empty" | "server" | null;
 
@@ -81,8 +84,8 @@ export function useMarketplace(
   const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.id) setCurrentUserId(data.user.id);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user?.id) setCurrentUserId(data.session.user.id);
     });
   }, []);
 
@@ -109,22 +112,40 @@ export function useMarketplace(
       return;
     }
 
+    // 1. Check in-memory browse/seller listings first (fastest path)
     const existing = listings.find((l) => l.id === id) ?? sellerListings.find((l) => l.id === id);
     if (existing) {
       setDetailListing(existing);
       return;
     }
 
+    // 2. Check seed listings — covers deep-links / refreshes with ?id=seed-N
+    //    Seed rows don’t exist in the DB so getMarketplaceItem would return null.
+    const seedMatch = seedListings.find((l) => l.id === id);
+    if (seedMatch) {
+      setDetailListing(seedMatch);
+      return;
+    }
+
+    // 3. Fetch from DB
     let mounted = true;
     async function fetchDetail() {
       setIsDetailLoading(true);
       try {
         const item = await getMarketplaceItem(id!);
-        if (mounted && item) {
-          setDetailListing(item);
+        if (mounted) {
+          if (item) {
+            setDetailListing(item);
+          } else {
+            // DB returned nothing — last-chance seed check (listings may
+            // have been empty when this effect first ran)
+            const seedFallback = seedListings.find((l) => l.id === id);
+            setDetailListing(seedFallback ?? null);
+          }
         }
       } catch (err) {
         console.error("[marketplace] Detail load error:", err);
+        if (mounted) setDetailListing(null);
       } finally {
         if (mounted) setIsDetailLoading(false);
       }
@@ -153,14 +174,32 @@ export function useMarketplace(
     return () => { mounted = false; };
   }, []);
 
-  // Fetch paginated listings when filters, activeView, or page changes
+  // ── Fetch counter — incremented to force a re-fetch (e.g. retry button) ──
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  // Fetch paginated listings when filters, activeView, or page changes.
+  //
+  // CRITICAL: isLoading MUST be set to false for ALL code paths.
+  // Previously, views like "detail", "seller", "analytics", etc. would
+  // early-return without touching isLoading, leaving it stuck at true
+  // forever. The BrowseView skeleton loader would then never disappear
+  // when the user navigated back to browse.
   useEffect(() => {
     let mounted = true;
+    
+    // ── Views that don't need a browse/saved fetch ──────────────────
+    // Immediately clear the loading flag so the UI is never stuck.
+    if (activeView !== "browse" && activeView !== "saved") {
+      setIsLoading(false);
+      return;
+    }
     
     async function fetchListings() {
       try {
         if (page === 1) setIsLoading(true);
         setError(null);
+        
+        console.log("[marketplace] Fetch started", { activeView, page, filters: filters.category, trigger: fetchTrigger });
         
         let result: { items: MarketplaceListing[], hasMore: boolean } = { items: [], hasMore: false };
 
@@ -178,6 +217,8 @@ export function useMarketplace(
 
         if (!mounted) return;
 
+        console.log("[marketplace] Fetch success", { count: result.items.length, hasMore: result.hasMore });
+
         if (page === 1) {
           setListings(result.items);
           if (result.items.length === 0) {
@@ -190,29 +231,20 @@ export function useMarketplace(
         setHasMore(result.hasMore);
       } catch (err: any) {
         if (!mounted) return;
+        console.error("[marketplace] Fetch FAILED", err?.message);
         setListings(page === 1 ? [] : listings);
         const errType = err?.message === "Failed to fetch" ? "network" : "server";
         setError(errType);
-        console.error("[marketplace] Fetch error:", JSON.stringify({
-          message: err?.message,
-          code: err?.code,
-          details: err?.details,
-          hint: err?.hint,
-          status: err?.status,
-          statusText: err?.statusText,
-        }, null, 2));
       } finally {
+        // GUARANTEE: loading is always set to false, no matter what
         if (mounted) setIsLoading(false);
       }
     }
 
-    // Only run if we're in a view that requires listings (not seller dashboard)
-    if (activeView === "browse" || activeView === "saved") {
-      fetchListings();
-    }
+    fetchListings();
     
     return () => { mounted = false; };
-  }, [filters, activeView, page, savedItems.length]); // Re-run if savedItems count changes (for the saved tab)
+  }, [filters, activeView, page, savedItems.length, fetchTrigger]); // Re-run if savedItems count changes (for the saved tab)
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.RECENT, JSON.stringify(recentlyViewed));
@@ -228,6 +260,7 @@ export function useMarketplace(
   const handleSetActiveView = useCallback((view: MarketplaceView) => {
     if (navigate) {
       navigate({
+        to: ".",
         search: (prev: any) => {
           const next = { ...prev, view };
           delete next.id;
@@ -252,6 +285,7 @@ export function useMarketplace(
   const viewListing = useCallback((id: string) => {
     if (navigate) {
       navigate({
+        to: ".",
         search: (prev: any) => ({ ...prev, id, view: "detail" }),
       });
     } else {
@@ -284,8 +318,11 @@ export function useMarketplace(
   }, [navigate, currentUserId]);
 
   const goBack = useCallback(() => {
-    if (navigate) {
+    if (window.history.length > 2) {
+      window.history.back();
+    } else if (navigate) {
       navigate({
+        to: ".",
         search: (prev: any) => {
           const next = { ...prev };
           delete next.id;
@@ -464,5 +501,6 @@ export function useMarketplace(
     deleteListing,
     markListingStatus,
     toggleSaveItem,
+    retryFetch: () => setFetchTrigger(t => t + 1),
   };
 }

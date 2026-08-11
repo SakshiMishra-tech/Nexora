@@ -255,13 +255,30 @@ export function FilterDrawer({ open, onOpenChange, filters, onFilterChange }: Fi
 }
 
 function FilterSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(true);
+  
   return (
     <section className="border-b border-border py-4 last:border-b-0">
-      <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase text-muted-foreground">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-secondary text-primary">{icon}</span>
-        {title}
+      <button 
+        type="button" 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between group"
+      >
+        <div className="flex items-center gap-2 text-sm font-black uppercase text-foreground">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-secondary text-primary transition-colors group-hover:bg-primary/20">{icon}</span>
+          {title}
+        </div>
+        <div className={`grid h-6 w-6 place-items-center rounded-full bg-secondary text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </button>
+      <div className={`grid transition-all duration-300 ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          {children}
+        </div>
       </div>
-      {children}
     </section>
   );
 }

@@ -11,143 +11,12 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import type { MarketplaceListing, MarketplaceFilters } from "@/types/marketplace";
 
-// Sample images
-import productBike from "@/assets/product-bike.jpg";
-import productBooks from "@/assets/product-books.jpg";
-import productLaptop from "@/assets/product-laptop.jpg";
-import productLamp from "@/assets/product-lamp.jpg";
-import student1 from "@/assets/student-1.jpg";
-import student2 from "@/assets/student-2.jpg";
-import student3 from "@/assets/student-3.jpg";
-
 export const Route = createFileRoute("/marketplace-premium")({
   head: () => ({ meta: [{ title: "Nexora Marketplace - Buy & Sell on Campus" }] }),
   component: MarketplacePremium,
 });
 
-// Mock data generator
-const generateMockListings = (): MarketplaceListing[] => [
-  {
-    id: "1",
-    user_id: "user1",
-    title: "Blue Campus Bicycle - Single Speed, Excellent Condition",
-    description: "Well-maintained bicycle perfect for campus commute. Includes lock and basket.",
-    price: 4800,
-    category: "cycles",
-    condition: "good",
-    status: "active",
-    images: [productBike],
-    location: "Hostel Block C",
-    is_negotiable: true,
-    views: 145,
-    saves: 23,
-    created_at: new Date(Date.now() - 660000).toISOString(),
-    updated_at: new Date(Date.now() - 660000).toISOString(),
-    seller_name: "Jordan Kumar",
-    seller_avatar: student2,
-    seller_college: "IIT Delhi",
-  },
-  {
-    id: "2",
-    user_id: "user2",
-    title: "ThinkPad T14 Gen 3 - i7, 16GB RAM, Perfect for Coding",
-    description: "Barely used ThinkPad in mint condition. Comes with charger and original box.",
-    price: 44000,
-    category: "electronics",
-    condition: "like-new",
-    status: "active",
-    images: [productLaptop],
-    location: "Engineering Block",
-    is_negotiable: false,
-    views: 328,
-    saves: 67,
-    created_at: new Date(Date.now() - 1680000).toISOString(),
-    updated_at: new Date(Date.now() - 1680000).toISOString(),
-    seller_name: "Maya Sharma",
-    seller_avatar: student1,
-    seller_college: "IIT Delhi",
-  },
-  {
-    id: "3",
-    user_id: "user3",
-    title: "First Year Engineering Books Bundle with Notes",
-    description: "Complete set of books with handwritten notes and solved papers. Minimal highlighting.",
-    price: 1200,
-    category: "books",
-    condition: "good",
-    status: "active",
-    images: [productBooks],
-    location: "Library Area",
-    is_negotiable: true,
-    views: 89,
-    saves: 34,
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 3600000).toISOString(),
-    seller_name: "Priya Reddy",
-    seller_avatar: student3,
-    seller_college: "IIT Delhi",
-  },
-  {
-    id: "4",
-    user_id: "user1",
-    title: "Warm LED Desk Lamp - Adjustable, USB Powered",
-    description: "Perfect for late night studies. Multiple brightness levels, USB powered.",
-    price: 650,
-    category: "furniture",
-    condition: "good",
-    status: "active",
-    images: [productLamp],
-    location: "Hostel 5",
-    is_negotiable: true,
-    views: 56,
-    saves: 12,
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-    updated_at: new Date(Date.now() - 7200000).toISOString(),
-    seller_name: "Rohan Mehta",
-    seller_avatar: student2,
-    seller_college: "IIT Delhi",
-  },
-  {
-    id: "5",
-    user_id: "user2",
-    title: "Scientific Calculator Casio fx-991EX (Latest Model)",
-    description: "Latest model, barely used. Comes with original packaging and manual.",
-    price: 1800,
-    category: "electronics",
-    condition: "like-new",
-    status: "active",
-    images: [productLaptop],
-    location: "Academic Block",
-    is_negotiable: false,
-    views: 234,
-    saves: 45,
-    created_at: new Date(Date.now() - 10800000).toISOString(),
-    updated_at: new Date(Date.now() - 10800000).toISOString(),
-    seller_name: "Maya Sharma",
-    seller_avatar: student1,
-    seller_college: "IIT Delhi",
-  },
-  {
-    id: "6",
-    user_id: "user3",
-    title: "Free - Old Course Notes and Printouts Collection",
-    description: "Taking up too much space. First come first serve! Perfect condition.",
-    price: 0,
-    category: "free",
-    condition: "fair",
-    status: "active",
-    images: [productBooks],
-    location: "Hostel 3",
-    is_negotiable: false,
-    views: 412,
-    saves: 89,
-    created_at: new Date(Date.now() - 14400000).toISOString(),
-    updated_at: new Date(Date.now() - 14400000).toISOString(),
-    seller_name: "Priya Reddy",
-    seller_avatar: student3,
-    seller_college: "IIT Delhi",
-  },
-];
+const generateMockListings = (): MarketplaceListing[] => [];
 
 function MarketplacePremium() {
   const { user } = useAuth();
@@ -162,7 +31,7 @@ function MarketplacePremium() {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
 
-  // Load mock data
+  // Keep this alternate view empty unless it is wired to real marketplace data.
   useEffect(() => {
     const loadListings = async () => {
       setLoading(true);

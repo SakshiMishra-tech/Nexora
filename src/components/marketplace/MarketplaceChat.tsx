@@ -46,9 +46,10 @@ interface MarketplaceChatProps {
   listings: any[];
   currentUserId?: string;
   initialChatId?: string | null;
+  filterMode?: "buying" | "selling";
 }
 
-export function MarketplaceChat({ onBackToBrowse, listings, currentUserId = "current-student", initialChatId }: MarketplaceChatProps) {
+export function MarketplaceChat({ onBackToBrowse, listings, currentUserId = "current-student", initialChatId, filterMode }: MarketplaceChatProps) {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(initialChatId || null);
   const [chatInput, setChatInput] = useState("");

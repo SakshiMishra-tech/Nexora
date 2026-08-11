@@ -34,9 +34,11 @@ import { useState, useMemo } from "react";
 import { type MarketplaceListing, formatPrice, timeAgo } from "@/lib/marketplace";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface SellerDashboardProps {
   listings: MarketplaceListing[];
+  onBack?: () => void;
   onPostItem: () => void;
   onEditItem: (id: string) => void;
   onDelete: (id: string) => void;
@@ -50,6 +52,7 @@ interface SellerDashboardProps {
 
 export function SellerDashboard({
   listings = [],
+  onBack,
   onPostItem,
   onEditItem,
   onDelete,
@@ -84,30 +87,48 @@ export function SellerDashboard({
     }
   };
 
+  // Derived stats
+  const totalViews = listings.reduce((sum, l) => sum + (l.views || 0), 0);
+  const totalSaves = listings.reduce((sum, l) => sum + (l.saves || 0), 0);
+  const totalEarned = soldListings.reduce((sum, l) => sum + l.price, 0);
+
   return (
     <div className="space-y-6 w-full pb-16">
-      
-      {/* ── Minimalist Clean Header Row ── */}
-      <div className="flex items-center justify-between gap-4 border-b border-border/40 pb-5">
+
+      {/* ── Back Row ── */}
+      {onBack && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronRight className="h-4 w-4 rotate-180" />
+            Back to Marketplace
+          </button>
+        </div>
+      )}
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black font-display text-foreground tracking-tight">My Marketplace</h1>
-          <p className="text-xs text-muted-foreground font-semibold mt-1">Manage your campus listings, drafts, and sales.</p>
+          <h1 className="font-display text-2xl font-black text-foreground">My Marketplace</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings, track sales and activity.</p>
         </div>
         <button
           onClick={onPostItem}
-          className="flex items-center gap-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 text-xs font-black shadow-soft hover:-translate-y-0.5 transition-all"
+          className="flex items-center gap-1.5 rounded-full bg-foreground text-background px-5 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity shrink-0"
         >
           <Plus className="h-4 w-4" />
-          <span>Sell Item</span>
+          <span>New Listing</span>
         </button>
       </div>
 
-      {/* ── Premium Tabbed Table Area ── */}
-      <div className="border border-border/70 rounded-2xl bg-card overflow-hidden shadow-soft">
+      {/* ── Tabbed Table ── */}
+      <div className="border border-border rounded-2xl bg-card overflow-hidden">
         
-        {/* Navigation Tabs Header */}
-        <div className="border-b border-border/60 bg-muted/30 px-6 py-2 flex items-center justify-between overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex gap-1.5">
+        {/* Tabs */}
+        <div className="border-b border-border px-6 py-1 flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-0">
             {[
               { id: "published", label: "Published", count: activeListings.length },
               { id: "drafts", label: "Drafts", count: draftListings.length },
@@ -268,26 +289,12 @@ export function SellerDashboard({
               </tbody>
             </table>
           ) : (
-            <div className="flex flex-col items-center justify-center text-center py-20 px-4">
-              <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-4">
-                <Package className="h-7 w-7" />
-              </div>
-              <h4 className="font-display text-lg font-black text-foreground">
-                No items here yet
-              </h4>
-              <p className="max-w-xs text-xs text-muted-foreground mt-1 leading-relaxed">
-                Add a new campus listing to start tracking clicks, views, and offers!
-              </p>
-              {activeTab === "published" && (
-                <button
-                  onClick={onPostItem}
-                  className="mt-4 flex items-center gap-1 text-xs font-black text-primary hover:underline"
-                >
-                  <span>Post Listing</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={<Package className="h-8 w-8 text-muted-foreground/60" />}
+              title="No items here yet"
+              description="Add a new campus listing to start tracking clicks, views, and offers!"
+              action={activeTab === "active" ? { label: "Create Listing", onClick: onPostItem } : undefined}
+            />
           )}
         </div>
 

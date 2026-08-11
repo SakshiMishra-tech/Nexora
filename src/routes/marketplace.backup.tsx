@@ -83,42 +83,19 @@ const FALLBACK_CATEGORIES = [
   "Free Items", "Others",
 ];
 
-// ── 3 Curated Demo Listings (always shown when no DB listings)
-const DEMO_LISTINGS = [
-  {
-    id: "demo-cycle",
-    title: "Hero Sprint 26T Cycle",
-    price: 3200,
-    condition: "USED" as const,
-    category: "Cycles",
-    image: "/product_cycle.png",
-    seller: "Rahul K.",
-    campus: "Delhi Technological University",
-    desc: "6-month-old Hero Sprint cycle. Slightly used, good condition. Disc brakes, 21 gears. Selling as I got a hostel nearby.",
-  },
-  {
-    id: "demo-laptop",
-    title: "Dell Inspiron 15 (i5, 8GB RAM)",
-    price: 28000,
-    condition: "USED" as const,
-    category: "Electronics",
-    image: "/product_laptop.png",
-    seller: "Priya M.",
-    campus: "NSUT West Campus",
-    desc: "2021 Dell Inspiron. 256GB SSD + 1TB HDD. Perfect for coding and assignments. Charger included. Minor cosmetic scratch.",
-  },
-  {
-    id: "demo-mouse",
-    title: "Logitech G304 Wireless Mouse",
-    price: 1100,
-    condition: "LIKE NEW" as const,
-    category: "Electronics",
-    image: "/product_mouse.png",
-    seller: "Arjun S.",
-    campus: "Amity Noida",
-    desc: "Barely used for 2 months. Comes with USB receiver and original box. Battery life is great — lasts weeks.",
-  },
-] as const;
+type DemoListing = {
+  id: string;
+  title: string;
+  price: number;
+  condition: "USED" | "LIKE NEW";
+  category: string;
+  image: string;
+  seller: string;
+  campus: string;
+  desc: string;
+};
+
+const DEMO_LISTINGS: DemoListing[] = [];
 
 function MarketplaceRoute() {
   const search = Route.useSearch();

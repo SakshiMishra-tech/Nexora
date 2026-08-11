@@ -1,7 +1,6 @@
-import productLamp from "@/assets/product-lamp.jpg";
-import student1 from "@/assets/student-1.jpg";
 import {
   CURRENT_USER_ID,
+  MARKETPLACE_EPOCH,
   MARKETPLACE_CATEGORIES,
   MARKETPLACE_CONDITIONS,
   type ListingFormValues,
@@ -24,8 +23,8 @@ const STORAGE_BUCKET = "marketplace-images";
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 async function getCurrentUserId() {
-  const { data } = await supabase.auth.getUser();
-  return data.user?.id ?? CURRENT_USER_ID;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user?.id ?? CURRENT_USER_ID;
 }
 
 // ── Value helpers ─────────────────────────────────────────────────────────────
@@ -108,59 +107,6 @@ function imageUrl(row: DbRow) {
 let _categoryCache: { rows: DbRow[]; ts: number } | null = null;
 const CATEGORY_CACHE_TTL = 60_000; // 60 s
 
-// Default categories to seed if the table is empty
-const DEFAULT_CATEGORIES = [
-  { name: "Books",             slug: "books",             icon: "📚", sort_order: 1 },
-  { name: "Electronics",      slug: "electronics",       icon: "💻", sort_order: 2 },
-  { name: "Hostel Essentials", slug: "hostel-essentials", icon: "🏠", sort_order: 3 },
-  { name: "Furniture",        slug: "furniture",         icon: "🪑", sort_order: 4 },
-  { name: "Fashion",          slug: "fashion",           icon: "👗", sort_order: 5 },
-  { name: "Sports",           slug: "sports",            icon: "⚽", sort_order: 6 },
-  { name: "Cycles",           slug: "cycles",            icon: "🚲", sort_order: 7 },
-  { name: "Gaming",           slug: "gaming",            icon: "🎮", sort_order: 8 },
-  { name: "Lab Equipment",    slug: "lab-equipment",     icon: "🔬", sort_order: 9 },
-  { name: "Others",           slug: "others",            icon: "📦", sort_order: 10 },
-];
-
-let _seedAttempted = false;
-
-async function seedCategoriesIfEmpty(): Promise<DbRow[]> {
-  if (_seedAttempted) return [];
-  _seedAttempted = true;
-
-  try {
-    // Try inserting with all columns first
-    const { data, error } = await supabase
-      .from(CATEGORY_TABLE)
-      .upsert(DEFAULT_CATEGORIES, { onConflict: "name" })
-      .select("*");
-
-    if (!error && data?.length) {
-      console.log("[marketplace] Seeded", data.length, "categories");
-      return data as DbRow[];
-    }
-
-    // If extra columns don't exist yet, fall back to name-only insert
-    if (error?.code === "PGRST204" || error?.message?.includes("column")) {
-      const nameOnly = DEFAULT_CATEGORIES.map((c) => ({ name: c.name }));
-      const { data: d2, error: e2 } = await supabase
-        .from(CATEGORY_TABLE)
-        .upsert(nameOnly, { onConflict: "name" })
-        .select("*");
-      if (!e2 && d2?.length) {
-        console.log("[marketplace] Seeded", d2.length, "categories (name-only)");
-        return d2 as DbRow[];
-      }
-      console.warn("[marketplace] Category seed (name-only) failed:", e2);
-    } else {
-      console.warn("[marketplace] Category seed failed:", error);
-    }
-  } catch (err) {
-    console.warn("[marketplace] Category seed error:", err);
-  }
-  return [];
-}
-
 async function getCategoryRows(): Promise<DbRow[]> {
   if (_categoryCache && Date.now() - _categoryCache.ts < CATEGORY_CACHE_TTL) {
     return _categoryCache.rows;
@@ -170,13 +116,7 @@ async function getCategoryRows(): Promise<DbRow[]> {
     .select("*")
     .order("sort_order", { ascending: true });
   if (error) throw error;
-  let rows = (data ?? []) as DbRow[];
-
-  // Auto-seed if empty
-  if (rows.length === 0) {
-    const seeded = await seedCategoriesIfEmpty();
-    if (seeded.length) rows = seeded;
-  }
+  const rows = (data ?? []) as DbRow[];
 
   _categoryCache = { rows, ts: Date.now() };
   return rows;
@@ -339,7 +279,7 @@ function mapListing(
   const sellerAvatar =
     stringValue(row, ["seller_avatar", "sellerAvatar"]) ||
     stringValue(profile, ["avatar_url"]) ||
-    student1;
+    "";
 
   const sellerCourse =
     stringValue(row, ["seller_course", "sellerCourse"]) ||
@@ -371,7 +311,7 @@ function mapListing(
     images: (() => {
       if (images.length) return images;
       const cover = stringValue(row, ["cover_image", "cover_url", "coverImage"]);
-      return cover ? [cover] : [productLamp];
+      return cover ? [cover] : [];
     })(),
     status: normalizedStatus(row),
     tags: (() => {
@@ -655,7 +595,7 @@ export async function getMarketplaceItems(
     } else {
       q = q.or("status.eq.available,status.eq.active").order("created_at", { ascending: false });
     }
-    return q;
+    return q.gte("created_at", MARKETPLACE_EPOCH);
   };
 
   const from = (page - 1) * pageSize;
@@ -745,6 +685,7 @@ export async function getSavedListings(
     .from(ITEM_TABLE)
     .select("*, profiles(full_name, avatar_url, college_name)", { count: "exact" })
     .in("id", itemIds)
+    .gte("created_at", MARKETPLACE_EPOCH)
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -756,6 +697,7 @@ export async function getSavedListings(
       .from(ITEM_TABLE)
       .select("*", { count: "exact" })
       .in("id", itemIds)
+      .gte("created_at", MARKETPLACE_EPOCH)
       .order("created_at", { ascending: false })
       .range(from, to);
     ({ data, error, count } = await fbQuery);
@@ -793,6 +735,7 @@ export async function getSellerItems(): Promise<MarketplaceListing[]> {
     .from(ITEM_TABLE)
     .select("*, profiles(full_name, avatar_url, college_name)")
     .eq("seller_id", userId)
+    .gte("created_at", MARKETPLACE_EPOCH)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -800,6 +743,7 @@ export async function getSellerItems(): Promise<MarketplaceListing[]> {
       .from(ITEM_TABLE)
       .select("*")
       .eq("seller_id", userId)
+      .gte("created_at", MARKETPLACE_EPOCH)
       .order("created_at", { ascending: false }));
   }
 

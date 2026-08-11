@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
+if (process.env.ALLOW_DEMO_MARKETPLACE_SEED !== "true") {
+  console.error(
+    "Demo marketplace seeding is disabled. Set ALLOW_DEMO_MARKETPLACE_SEED=true only when you intentionally want fake marketplace data.",
+  );
+  process.exit(1);
+}
+
 const SUPABASE_URL = 'https://fzhheofzidenlclfqrim.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aGhlb2Z6aWRlbmxjbGZxcmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODQ1OTQsImV4cCI6MjA5ODE2MDU5NH0.epEoJq8PHBW6UMzTEreo8_8Ty-PX-kxIGEShWwK2lms';
 
@@ -8,299 +15,146 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const DEMO_SELLER_ID = '00000000-0000-0000-0000-000000000000'; // dummy UUID
 
 const itemsToInsert = [
-  // Books (6)
+  // Books
   {
     title: 'DSA Made Easy',
-    description: 'Perfect for interview preparation. Barely used.',
+    description: 'Narasimha Karumanchi. Perfect for interview preparation. Barely used.',
     category: 'Books',
-    condition: 'Like New',
+    condition: 'Like new',
     price: 450,
-    location: 'Bhabha Hostel',
+    location: 'Main Campus',
     images: ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Operating System Concepts (10th Ed)',
-    description: 'Dinosaur book for OS. Has some highlights.',
+    title: 'Operating System Concepts',
+    description: 'Dinosaur book (10th Edition) for OS. Has some highlights but overall good condition.',
     category: 'Books',
     condition: 'Good',
-    price: 300,
-    location: 'Library Cafe',
+    price: 350,
+    location: 'North Campus',
     images: ['https://images.unsplash.com/photo-1589998059171-989d887dda6e?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Database System Concepts (DBMS)',
-    description: 'Standard textbook for DBMS.',
-    category: 'Books',
-    condition: 'Fair',
-    price: 350,
-    location: 'Main Gate',
-    images: ['https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Java The Complete Reference',
-    description: 'Comprehensive guide for Java programming.',
-    category: 'Books',
+    title: 'DBMS Notes',
+    description: 'Complete handwritten notes for Database Management Systems covering all normalization forms and transaction control.',
+    category: 'Notes',
     condition: 'Good',
-    price: 400,
-    location: 'Ramanujan Hostel',
-    images: ['https://images.unsplash.com/photo-1512820200502-9ed146698675?q=80&w=600&auto=format&fit=crop']
+    price: 150,
+    location: 'South Campus',
+    images: ['https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=600&auto=format&fit=crop']
   },
+  // Electronics
   {
-    title: 'Higher Engineering Mathematics',
-    description: 'BS Grewal, excellent condition.',
-    category: 'Books',
-    condition: 'Like New',
-    price: 500,
-    location: 'Visvesvaraya Hostel',
-    images: ['https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Digital Logic and Computer Design',
-    description: 'Morris Mano textbook for DLD.',
-    category: 'Books',
-    condition: 'Fair',
-    price: 200,
-    location: 'CS Block',
-    images: ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Electronics (5)
-  {
-    title: 'Casio Scientific Calculator FX-991EX',
-    description: 'Classwiz calculator, allowed in exams. Fully working.',
+    title: 'Dell Inspiron 15',
+    description: 'i5 11th Gen, 16GB RAM, 512GB SSD. Used for 2 years. Battery lasts ~3 hours. Good for coding.',
     category: 'Electronics',
     condition: 'Good',
+    price: 25000,
+    location: 'Main Campus',
+    images: ['https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=600&auto=format&fit=crop']
+  },
+  {
+    title: 'Logitech Mouse (M331)',
+    description: 'Silent wireless mouse. Perfect for library use. Includes new battery.',
+    category: 'Electronics',
+    condition: 'Like new',
     price: 600,
-    location: 'Bhabha Hostel',
-    images: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Logitech Wireless Keyboard',
-    description: 'Compact wireless keyboard. Batteries included.',
-    category: 'Electronics',
-    condition: 'Like New',
-    price: 800,
-    location: 'Food Court',
-    images: ['https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Gaming Mouse',
-    description: 'Razer DeathAdder. Good for gaming and coding.',
-    category: 'Electronics',
-    condition: 'Good',
-    price: 900,
-    location: 'Ramanujan Hostel',
+    location: 'North Campus',
     images: ['https://images.unsplash.com/photo-1527814050087-379381547969?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Adjustable Laptop Stand',
-    description: 'Aluminium stand, good for posture.',
-    category: 'Electronics',
-    condition: 'Like New',
-    price: 450,
-    location: 'Library',
-    images: ['https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Dell 24-inch Monitor',
-    description: '1080p IPS display. Great for dual screen setup.',
+    title: 'Mechanical Keyboard (Red Switches)',
+    description: 'Cosmic Byte CB-GK-16. TKL size. All keys working perfectly. Replaced with a new one.',
     category: 'Electronics',
     condition: 'Good',
-    price: 4500,
-    location: 'Aryabhatta Hostel',
-    images: ['https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Hostel (4)
-  {
-    title: 'Wooden Study Table',
-    description: 'Sturdy table with one drawer.',
-    category: 'Hostel Essentials',
-    condition: 'Good',
-    price: 800,
-    location: 'Visvesvaraya Hostel',
-    images: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Single Bed Mattress',
-    description: 'Standard hostel bed size. Clean.',
-    category: 'Hostel Essentials',
-    condition: 'Fair',
-    price: 500,
-    location: 'Bhabha Hostel',
-    images: ['https://images.unsplash.com/photo-1505693314120-0d443867891c?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Ergonomic Chair',
-    description: 'Comfortable mesh chair for long study hours.',
-    category: 'Hostel Essentials',
-    condition: 'Like New',
     price: 1200,
-    location: 'Ramanujan Hostel',
-    images: ['https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=600&auto=format&fit=crop']
+    location: 'South Campus',
+    images: ['https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=600&auto=format&fit=crop']
   },
+  // Cycles
   {
-    title: 'Milton 1L Water Bottle',
-    description: 'Stainless steel, keeps water cold.',
-    category: 'Hostel Essentials',
-    condition: 'Like New',
-    price: 200,
-    location: 'Main Gate',
-    images: ['https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Cycles (3)
-  {
-    title: 'Hero Sprint Cycle',
-    description: '21 gears, good tires. Needs minor oiling.',
+    title: 'Hero Sprint',
+    description: '21 gears, good tires. Needs minor oiling. Used for 1 year to commute from hostel to classes.',
     category: 'Cycles',
     condition: 'Good',
-    price: 2500,
-    location: 'Cycle Stand A',
+    price: 3000,
+    location: 'Main Campus',
     images: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Firefox Mountain Bike',
-    description: 'Excellent condition, used for 1 semester only.',
+    title: 'Firefox Road Cycle',
+    description: 'Lightweight aluminium frame. Excellent condition. Selling because I am graduating.',
     category: 'Cycles',
-    condition: 'Like New',
-    price: 4500,
-    location: 'Aryabhatta Hostel',
+    condition: 'Like new',
+    price: 5500,
+    location: 'North Campus',
     images: ['https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?q=80&w=600&auto=format&fit=crop']
   },
+  // Hostel Essentials
   {
-    title: 'Hercules Basic Cycle',
-    description: 'Single speed cycle. Perfect for campus commute.',
-    category: 'Cycles',
+    title: 'Study Lamp',
+    description: 'Wipro Garnet 6W LED Table lamp. Adjustable brightness and flexible neck.',
+    category: 'Hostel Essentials',
+    condition: 'Like new',
+    price: 450,
+    location: 'South Campus',
+    images: ['https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=600&auto=format&fit=crop']
+  },
+  {
+    title: 'Single Bed Mattress',
+    description: 'Standard hostel bed size (72x36 inches). Clean and comfortable. Sleepwell brand.',
+    category: 'Hostel Essentials',
     condition: 'Fair',
-    price: 1500,
-    location: 'Bhabha Hostel',
-    images: ['https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?q=80&w=600&auto=format&fit=crop']
+    price: 800,
+    location: 'Main Campus',
+    images: ['https://images.unsplash.com/photo-1505693314120-0d443867891c?q=80&w=600&auto=format&fit=crop']
   },
-
-  // Fashion (3)
   {
-    title: 'Denim Jacket (Size M)',
-    description: 'Barely worn, stylish blue denim.',
+    title: 'Table Fan',
+    description: 'Usha table fan, 3 speeds. High air delivery. Useful for summers in hostel.',
+    category: 'Hostel Essentials',
+    condition: 'Good',
+    price: 900,
+    location: 'North Campus',
+    images: ['https://images.unsplash.com/photo-1565151443833-28ea0283f514?q=80&w=600&auto=format&fit=crop']
+  },
+  // Fashion
+  {
+    title: 'H&M Black Hoodie (Size L)',
+    description: 'Classic black hoodie, barely worn. Very warm for winters.',
     category: 'Fashion',
-    condition: 'Like New',
-    price: 600,
-    location: 'Food Court',
-    images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=600&auto=format&fit=crop']
+    condition: 'Like new',
+    price: 700,
+    location: 'Main Campus',
+    images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Nike Running Shoes (Size 9)',
-    description: 'Used for a month. Washed and clean.',
+    title: 'Puma Sneakers (UK 9)',
+    description: 'White sneakers. Washed and clean. Good for everyday use.',
     category: 'Fashion',
     condition: 'Good',
-    price: 1200,
-    location: 'Sports Complex',
+    price: 1000,
+    location: 'South Campus',
     images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop']
   },
+  // Academic
   {
-    title: 'Formal White Shirt (Size L)',
-    description: 'Perfect for placements or presentations.',
-    category: 'Fashion',
-    condition: 'Like New',
+    title: 'Semester 4 CS Notes',
+    description: 'Comprehensive notes for OS, DBMS, Algorithms and Computer Networks. Scored 9 SGPA with these.',
+    category: 'Notes',
+    condition: 'Good',
     price: 300,
-    location: 'Ramanujan Hostel',
-    images: ['https://images.unsplash.com/photo-1620012253295-c15ce331c896?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Sports (3)
-  {
-    title: 'Yonex Badminton Racket',
-    description: 'Muscle Power 29. String intact.',
-    category: 'Sports',
-    condition: 'Good',
-    price: 800,
-    location: 'Sports Complex',
-    images: ['https://images.unsplash.com/photo-1611172462310-911252069f16?q=80&w=600&auto=format&fit=crop']
+    location: 'North Campus',
+    images: ['https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=600&auto=format&fit=crop']
   },
   {
-    title: 'Nivia Football',
-    description: 'Size 5. Slightly used.',
-    category: 'Sports',
+    title: 'Physics Lab Manuals',
+    description: 'Complete set of readings and graphs for first-year physics lab. Verified by TA.',
+    category: 'Academic',
     condition: 'Fair',
-    price: 300,
-    location: 'Football Ground',
-    images: ['https://images.unsplash.com/photo-1614632537197-38a47059e670?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Cricket Bat (Kashmir Willow)',
-    description: 'Good stroke, grip needs replacement.',
-    category: 'Sports',
-    condition: 'Good',
-    price: 1000,
-    location: 'Visvesvaraya Hostel',
-    images: ['https://images.unsplash.com/photo-1593766827228-8737b4534aa6?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Kitchen (3)
-  {
-    title: 'Prestige Electric Cooker',
-    description: '1.5L capacity. Perfect for Maggie and rice.',
-    category: 'Others',
-    condition: 'Good',
-    price: 700,
-    location: 'Aryabhatta Hostel',
-    images: ['https://images.unsplash.com/photo-1544233726-9f1d2b27be8b?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Pigeon Electric Kettle',
-    description: 'Boils water fast. Cleaned recently.',
-    category: 'Others',
-    condition: 'Like New',
-    price: 350,
-    location: 'Bhabha Hostel',
-    images: ['https://images.unsplash.com/photo-1594213114663-d94af98ff78b?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Induction Cooktop',
-    description: 'Philips 2100W induction. Works flawlessly.',
-    category: 'Others',
-    condition: 'Good',
-    price: 1200,
-    location: 'Ramanujan Hostel',
-    images: ['https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop']
-  },
-
-  // Misc (4)
-  {
-    title: 'American Tourister Backpack',
-    description: 'Spacious 32L bag. Minor tear on side pocket.',
-    category: 'Others',
-    condition: 'Fair',
-    price: 400,
-    location: 'Library',
-    images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'HP DeskJet Printer',
-    description: 'Color printer, needs new ink cartridges.',
-    category: 'Electronics',
-    condition: 'Fair',
-    price: 1000,
-    location: 'CS Block',
-    images: ['https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Sony Over-Ear Headphones',
-    description: 'Great bass, wired headphones.',
-    category: 'Electronics',
-    condition: 'Good',
-    price: 750,
-    location: 'Bhabha Hostel',
-    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop']
-  },
-  {
-    title: 'Mi Power Bank 10000mAh',
-    description: 'Fast charging supported.',
-    category: 'Electronics',
-    condition: 'Like New',
-    price: 600,
-    location: 'Main Gate',
-    images: ['https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?q=80&w=600&auto=format&fit=crop']
+    price: 150,
+    location: 'Main Campus',
+    images: ['https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?q=80&w=600&auto=format&fit=crop']
   }
 ];
 

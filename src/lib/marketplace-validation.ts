@@ -162,6 +162,7 @@ export function validateImages(images: (File | string)[], isDraft: boolean): str
     if (typeof img === "string") {
       key = img;
     } else {
+      if (!img || !img.type) return "Invalid image format. Please re-upload your images.";
       key = `${img.name}-${img.size}`;
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif"];
       if (!allowedTypes.includes(img.type.toLowerCase())) {

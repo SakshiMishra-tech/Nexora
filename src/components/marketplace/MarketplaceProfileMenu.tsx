@@ -190,7 +190,7 @@ export function MarketplaceProfileMenu({
           <MenuItem
             icon={<HelpCircle className="h-4 w-4" />}
             label="Help & Support"
-            onClick={() => handleNavigate("/help")}
+            onClick={() => handleNavigate("/marketplace/help")}
           />
         </div>
 
