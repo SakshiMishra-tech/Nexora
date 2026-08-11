@@ -1,42 +1,47 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
 import {
   AlertCircle,
   Bell,
+  Calendar,
   Camera,
-  Check,
   CheckCircle2,
   Clock,
-  Eye,
-  Flag,
   Heart,
   MapPin,
-  MessageCircle,
-  Plus,
+  MessageSquare,
+  MoreHorizontal,
   Search,
   Share2,
-  ShieldQuestion,
+  ShieldCheck,
   X,
+  User,
+  Check,
+  Flame,
+  ChevronRight,
+  ThumbsUp,
+  Flag,
+  Sparkles
 } from "lucide-react";
-import { type FormEvent, useMemo, useState } from "react";
+import { NexoraLogo } from "@/components/brand/NexoraLogo";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/lost-found")({
-  head: () => ({ meta: [{ title: "Nexora - Lost & Found" }] }),
-  component: LostFound,
+  head: () => ({ meta: [{ title: "Nexora — Lost & Found Feed" }] }),
+  component: LostFoundRoute,
 });
 
-type PostType = "Lost" | "Found";
-type PostStatus = "Searching" | "Matched" | "Claim Requested" | "Recovered" | "Closed";
-type ContactPreference = "Chat only" | "Phone optional" | "Campus desk";
-type FeedFilter = "All" | "Lost" | "Found" | "Recovered" | "Searching" | "Latest" | "Oldest";
-
-type ClaimRequest = {
-  id: string;
-  claimant: string;
-  answer: string;
-  status: "Pending" | "Accepted" | "Rejected" | "More details";
-  createdAt: string;
-};
+// ── Types ───────────────────────────────────────────────────────────────────
+type PostType = "Lost" | "Found" | "Recovered" | "Searching";
 
 type LostFoundPost = {
   id: string;
@@ -45,1002 +50,547 @@ type LostFoundPost = {
   category: string;
   description: string;
   location: string;
+  campus: string;
   date: string;
   time: string;
-  campus: string;
-  building: string;
-  floor: string;
-  room: string;
-  exactSpot: string;
-  storageLocation: string;
   images: string[];
-  reward: string;
-  contactPreference: ContactPreference;
-  phone: string;
-  chatOnly: boolean;
-  anonymous: boolean;
-  verificationQuestion: string;
-  verificationAnswer: string;
   postedBy: string;
-  status: PostStatus;
+  postedByAvatar?: string;
   createdAt: string;
   likes: number;
-  saved: boolean;
-  reports: number;
-  comments: string[];
-  claims: ClaimRequest[];
+  comments: number;
 };
 
-type FormState = {
-  type: PostType;
-  itemName: string;
-  category: string;
-  description: string;
-  location: string;
-  date: string;
-  time: string;
-  campus: string;
-  building: string;
-  floor: string;
-  room: string;
-  exactSpot: string;
-  storageLocation: string;
-  reward: string;
-  contactPreference: ContactPreference;
-  phone: string;
-  chatOnly: boolean;
-  anonymous: boolean;
-  verificationQuestion: string;
-  verificationAnswer: string;
-  images: string[];
-};
-
-const categories = ["Electronics", "ID & Cards", "Books", "Bottle", "Keys", "Bags", "Stationery", "Other"];
-const buildings = ["Any building", "Library", "Hall 3", "Cafe Beans", "Sports ground", "CSE Block", "Hostel 5"];
-const storageLocations = ["Library Desk", "Security Office", "Reception", "Hostel Warden", "Department Office", "Student Council", "With Finder"];
-const filters: FeedFilter[] = ["All", "Lost", "Found", "Recovered", "Searching", "Latest", "Oldest"];
-
-const today = new Date().toISOString().slice(0, 10);
-
-const seedPosts: LostFoundPost[] = [
-  {
-    id: "lf-calculator",
-    type: "Lost",
-    itemName: "Scientific calculator",
-    category: "Electronics",
-    description: "Casio calculator with a dark grey cover. Last used before the physics lab practical.",
-    location: "Hall 3",
-    date: today,
-    time: "10:15",
-    campus: "Nexora Main Campus",
-    building: "Hall 3",
-    floor: "2",
-    room: "Lab wing",
-    exactSpot: "",
-    storageLocation: "",
-    images: [],
-    reward: "100",
-    contactPreference: "Chat only",
-    phone: "",
-    chatOnly: true,
-    anonymous: false,
-    verificationQuestion: "Which calculator cover color?",
-    verificationAnswer: "dark grey",
-    postedBy: "abc123 Student",
-    status: "Searching",
-    createdAt: minutesAgo(18),
-    likes: 4,
-    saved: false,
-    reports: 0,
-    comments: ["I saw one near the back bench."],
-    claims: [],
-  },
-  {
-    id: "lf-earbuds",
-    type: "Found",
-    itemName: "Black earbuds case",
-    category: "Electronics",
-    description: "Found near the billing counter. No earbuds inside, only the charging case.",
-    location: "Cafe Beans",
-    date: today,
-    time: "09:42",
-    campus: "Nexora Main Campus",
-    building: "Cafe Beans",
-    floor: "Ground",
-    room: "",
-    exactSpot: "Billing counter",
-    storageLocation: "Reception",
-    images: [],
-    reward: "",
-    contactPreference: "Campus desk",
-    phone: "",
-    chatOnly: true,
-    anonymous: false,
-    verificationQuestion: "Which sticker is on the case?",
-    verificationAnswer: "blue star",
-    postedBy: "Cafe Desk",
-    status: "Matched",
-    createdAt: minutesAgo(32),
-    likes: 8,
-    saved: true,
-    reports: 0,
-    comments: [],
-    claims: [
-      {
-        id: "claim-earbuds-1",
-        claimant: "Maya",
-        answer: "It has a blue star sticker",
-        status: "Pending",
-        createdAt: minutesAgo(8),
-      },
-    ],
-  },
-  {
-    id: "lf-id-card",
-    type: "Found",
-    itemName: "Student ID card",
-    category: "ID & Cards",
-    description: "ID card returned after verifying the student name and department.",
-    location: "Library desk",
-    date: today,
-    time: "08:55",
-    campus: "Nexora Main Campus",
-    building: "Library",
-    floor: "Ground",
-    room: "Front desk",
-    exactSpot: "Reading table 4",
-    storageLocation: "Library Desk",
-    images: [],
-    reward: "",
-    contactPreference: "Campus desk",
-    phone: "",
-    chatOnly: true,
-    anonymous: false,
-    verificationQuestion: "",
-    verificationAnswer: "",
-    postedBy: "Library Desk",
-    status: "Recovered",
-    createdAt: minutesAgo(60),
-    likes: 11,
-    saved: false,
-    reports: 0,
-    comments: ["Returned to owner."],
-    claims: [],
-  },
-  {
-    id: "lf-bottle",
-    type: "Lost",
-    itemName: "Blue water bottle",
-    category: "Bottle",
-    description: "Matte blue bottle with a small dent near the cap.",
-    location: "Sports ground",
-    date: today,
-    time: "08:10",
-    campus: "Nexora Main Campus",
-    building: "Sports ground",
-    floor: "",
-    room: "",
-    exactSpot: "",
-    storageLocation: "",
-    images: [],
-    reward: "",
-    contactPreference: "Phone optional",
-    phone: "",
-    chatOnly: false,
-    anonymous: true,
-    verificationQuestion: "Which sticker is on the bottle?",
-    verificationAnswer: "basketball",
-    postedBy: "Anonymous",
-    status: "Searching",
-    createdAt: minutesAgo(120),
-    likes: 2,
-    saved: false,
-    reports: 0,
-    comments: [],
-    claims: [],
-  },
+const CATEGORIES = [
+  "ID Card", "Wallet", "Keys", "Mobile Phone", "Laptop", 
+  "Earbuds / Headphones", "Charger", "Documents", "Books", 
+  "Bags", "Clothing", "Others",
 ];
 
-function LostFound() {
-  const [posts, setPosts] = useState(seedPosts);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<FeedFilter>("Latest");
-  const [category, setCategory] = useState("All categories");
-  const [building, setBuilding] = useState("Any building");
-  const [postOpen, setPostOpen] = useState(false);
-  const [detailPostId, setDetailPostId] = useState<string | null>(null);
-  const [claimPostId, setClaimPostId] = useState<string | null>(null);
-  const [claimAnswer, setClaimAnswer] = useState("");
-  const [commentText, setCommentText] = useState("");
-  const [notifications, setNotifications] = useState<string[]>([
-    "Earbuds case has a new possible owner.",
-    "Student ID card was marked recovered.",
-  ]);
+// ── Mock Data ───────────────────────────────────────────────────────────────
+const seedPosts: LostFoundPost[] = [
+  {
+    id: "lf-1",
+    type: "Lost",
+    itemName: "Black Leather Wallet with ID",
+    category: "Wallet",
+    description: "Hey everyone, I lost my black leather wallet near the library cafe around 2:30 PM today. It contains my student ID card, driver's license, and some cash. If anyone has found it, please let me know ASAP! I really need the ID for my exams tomorrow.",
+    location: "Library Cafe",
+    campus: "Nexora Main Campus",
+    date: "2026-08-10",
+    time: "14:30",
+    images: ["https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=800"],
+    postedBy: "Rahul Sharma",
+    postedByAvatar: "https://ui-avatars.com/api/?name=Rahul+Sharma&background=4f46e5&color=fff",
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    likes: 12,
+    comments: 4
+  },
+  {
+    id: "lf-2",
+    type: "Found",
+    itemName: "Apple AirPods Pro Case",
+    category: "Earbuds / Headphones",
+    description: "Found a white AirPods Pro case with both earbuds inside. Left it at the admin block reception with the security guard. It has a tiny blue scratch on the back. Claim it from the reception if it's yours!",
+    location: "Admin Block",
+    campus: "South Campus",
+    date: "2026-08-09",
+    time: "09:15",
+    images: ["https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&q=80&w=800"],
+    postedBy: "Priya Patel",
+    postedByAvatar: "https://ui-avatars.com/api/?name=Priya+Patel&background=ec4899&color=fff",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    likes: 45,
+    comments: 2
+  },
+  {
+    id: "lf-3",
+    type: "Recovered",
+    itemName: "MacBook Pro Charger",
+    category: "Charger",
+    description: "Update: The charger has been found! Huge thanks to Neha for returning it to the department office. Nexora community is the best!",
+    location: "Mechanical Dept.",
+    campus: "Nexora Main Campus",
+    date: "2026-08-08",
+    time: "16:00",
+    images: [],
+    postedBy: "Amit Singh",
+    postedByAvatar: "https://ui-avatars.com/api/?name=Amit+Singh&background=10b981&color=fff",
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    likes: 89,
+    comments: 12
+  }
+];
 
-  const visiblePosts = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+function timeAgo(dateString: string) {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
-    const next = posts.filter((post) => {
-      const haystack = [
-        post.itemName,
-        post.category,
-        post.description,
-        post.location,
-        post.campus,
-        post.building,
-        post.floor,
-        post.room,
-        post.exactSpot,
-        post.storageLocation,
-      ]
-        .join(" ")
-        .toLowerCase();
+function LostFoundRoute() {
+  const navigate = useNavigate();
+  const [posts, setPosts] = useState<LostFoundPost[]>(seedPosts);
+  
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCampus, setActiveCampus] = useState("All");
+  const [activeType, setActiveType] = useState<"All" | PostType>("All");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("Recent");
+  
+  // Modals
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<"Lost" | "Found">("Lost");
 
-      const matchesSearch = !normalized || haystack.includes(normalized);
-      const matchesType = filter === "Lost" || filter === "Found" ? post.type === filter : true;
-      const matchesStatus =
-        filter === "Recovered" || filter === "Searching" ? post.status === filter : true;
-      const matchesCategory = category === "All categories" || post.category === category;
-      const matchesBuilding = building === "Any building" || post.building === building;
-
-      return matchesSearch && matchesType && matchesStatus && matchesCategory && matchesBuilding;
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      if (activeType !== "All" && post.type !== activeType) return false;
+      if (activeCategory !== "All" && post.category !== activeCategory) return false;
+      if (activeCampus !== "All" && post.campus !== activeCampus) return false;
+      if (searchQuery && !post.itemName.toLowerCase().includes(searchQuery.toLowerCase()) && !post.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
     });
+  }, [posts, activeType, activeCategory, activeCampus, searchQuery]);
 
-    return [...next].sort((a, b) => {
-      const delta = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      return filter === "Oldest" ? -delta : delta;
-    });
-  }, [building, category, filter, posts, query]);
-
-  const detailPost = posts.find((post) => post.id === detailPostId);
-  const claimPost = posts.find((post) => post.id === claimPostId);
-  const recoveredCount = posts.filter((post) => post.status === "Recovered").length;
-  const pendingClaims = posts.reduce((total, post) => total + post.claims.filter((claim) => claim.status === "Pending").length, 0);
-
-  const notify = (message: string) => {
-    setNotifications((current) => [message, ...current].slice(0, 5));
-  };
-
-  const handleCreatePost = (values: FormState) => {
-    const post: LostFoundPost = {
-      id: `lf-${Date.now()}`,
-      type: values.type,
-      itemName: values.itemName.trim(),
-      category: values.category,
-      description: values.description.trim(),
-      location: values.location.trim(),
-      date: values.date,
-      time: values.time,
-      campus: values.campus.trim(),
-      building: values.building.trim(),
-      floor: values.floor.trim(),
-      room: values.room.trim(),
-      exactSpot: values.exactSpot.trim(),
-      storageLocation: values.storageLocation.trim(),
-      images: values.images,
-      reward: values.reward.trim(),
-      contactPreference: values.contactPreference,
-      phone: values.phone.trim(),
-      chatOnly: values.chatOnly,
-      anonymous: values.anonymous,
-      verificationQuestion: values.verificationQuestion.trim(),
-      verificationAnswer: values.verificationAnswer.trim(),
-      postedBy: values.anonymous ? "Anonymous" : "abc123 Student",
-      status: values.type === "Lost" ? "Searching" : "Searching",
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      saved: false,
-      reports: 0,
-      comments: [],
-      claims: [],
-    };
-
-    setPosts((current) => [post, ...current]);
-    setPostOpen(false);
-    notify(`${post.type} post published: ${post.itemName}`);
-  };
-
-  const updatePost = (id: string, updater: (post: LostFoundPost) => LostFoundPost) => {
-    setPosts((current) => current.map((post) => (post.id === id ? updater(post) : post)));
-  };
-
-  const handleClaimSubmit = () => {
-    if (!claimPost || !claimAnswer.trim()) return;
-
-    const claim: ClaimRequest = {
-      id: `claim-${Date.now()}`,
-      claimant: "abc123 Student",
-      answer: claimAnswer.trim(),
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-    };
-
-    updatePost(claimPost.id, (post) => ({
-      ...post,
-      status: "Claim Requested",
-      claims: [claim, ...post.claims],
-    }));
-    notify(`Possible owner found for ${claimPost.itemName}.`);
-    setClaimAnswer("");
-    setClaimPostId(null);
-  };
-
-  const handleClaimDecision = (postId: string, claimId: string, status: ClaimRequest["status"]) => {
-    updatePost(postId, (post) => ({
-      ...post,
-      status: status === "Accepted" ? "Recovered" : post.status,
-      claims: post.claims.map((claim) => (claim.id === claimId ? { ...claim, status } : claim)),
-    }));
-    notify(status === "Accepted" ? "Finder accepted the claim. Item marked recovered." : `Claim marked: ${status}.`);
-  };
-
-  const handleShare = async (post: LostFoundPost) => {
-    const text = `${post.type}: ${post.itemName} at ${post.location}`;
-    try {
-      await navigator.clipboard?.writeText(text);
-      notify("Post details copied for sharing.");
-    } catch {
-      notify("Share summary ready.");
-    }
+  const handleOpenReport = (type: "Lost" | "Found") => {
+    setReportType(type);
+    setIsReportModalOpen(true);
   };
 
   return (
     <ModuleAccessBoundary moduleId="lost-found">
-      <CampusPageShell
-        label="Lost & Found"
-        title="Lost something? Found something?"
-        subtitle="Post lost items, report found items, and let Nexora match clues across campus."
-        icon={MapPin}
-      >
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <section className="grid gap-3">
-            <div className="paper-lift border border-border bg-card p-3">
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2">
-                  <Search className="h-4 w-4 shrink-0 text-primary" />
-                  <input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-muted-foreground"
-                    placeholder="Search item, category, color, brand, hostel, building..."
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {filters.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setFilter(item)}
-                      className={`px-3 py-2 text-xs font-black transition ${
-                        filter === item ? "bg-foreground text-background" : "border border-border bg-background text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <select value={category} onChange={(event) => setCategory(event.target.value)} className="border border-border bg-background px-3 py-2 text-sm font-black outline-none">
-                  <option>All categories</option>
-                  {categories.map((item) => <option key={item}>{item}</option>)}
-                </select>
-                <select value={building} onChange={(event) => setBuilding(event.target.value)} className="border border-border bg-background px-3 py-2 text-sm font-black outline-none">
-                  {buildings.map((item) => <option key={item}>{item}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {visiblePosts.map((item) => (
-              <PostCard
-                key={item.id}
-                item={item}
-                onOpen={() => setDetailPostId(item.id)}
-                onClaim={() => setClaimPostId(item.id)}
-                onLike={() => updatePost(item.id, (post) => ({ ...post, likes: post.likes + 1 }))}
-                onSave={() => updatePost(item.id, (post) => ({ ...post, saved: !post.saved }))}
-                onShare={() => void handleShare(item)}
-                onReport={() => {
-                  updatePost(item.id, (post) => ({ ...post, reports: post.reports + 1 }));
-                  notify(`Report sent for admin review: ${item.itemName}`);
-                }}
-              />
-            ))}
-
-            {visiblePosts.length === 0 && (
-              <div className="paper-lift border border-border bg-card p-8 text-center">
-                <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
-                <h2 className="mt-3 font-display text-2xl font-black">No matching posts</h2>
-                <p className="mt-1 text-sm font-semibold text-muted-foreground">Try a different clue, building, or filter.</p>
-              </div>
-            )}
-          </section>
-
-          <aside className="h-fit border border-border bg-card p-4 shadow-soft">
-            <button
-              type="button"
-              onClick={() => setPostOpen(true)}
-              className="flex w-full items-center justify-center gap-2 bg-foreground px-4 py-3 text-sm font-black text-background"
+      <div className="min-h-screen bg-background text-foreground font-sans flex flex-col pb-12">
+        
+        {/* ── TOP NAV BAR ─────────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-background/95 backdrop-blur-md border-b border-border/50">
+          <div className="flex items-center gap-6">
+            <NexoraLogo size="sm" />
+            <div className="h-5 w-px bg-border/50" />
+            <Link 
+              to="/" 
+              className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
             >
-              <Plus className="h-4 w-4" />
-              Post lost/found item
+              ← Dashboard
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-secondary transition-colors text-foreground relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-rose-500 rounded-full border-2 border-background" />
             </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="h-10 w-10 rounded-full overflow-hidden border border-border/50 hover:border-border transition-colors focus:outline-none">
+                <img src="https://ui-avatars.com/api/?name=User&background=333&color=fff" alt="Profile" className="h-full w-full object-cover" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-card border-border/50 text-foreground">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <DropdownMenuItem className="cursor-pointer hover:bg-secondary focus:bg-secondary">My Reports</DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer hover:bg-secondary focus:bg-secondary">Settings</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
 
-            <div className="mt-4 rounded-2xl border border-border bg-background p-3">
-              <div className="flex items-center gap-2 text-sm font-black">
-                <Search className="h-4 w-4 text-primary" />
-                Match by clue
-              </div>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="mt-2 w-full bg-transparent text-sm outline-none"
-                placeholder="calculator, ID, wallet..."
-              />
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-              <div className="bg-success/10 p-3">
-                <p className="font-display text-2xl font-black">{recoveredCount}</p>
-                <p className="text-xs font-bold text-success">recovered</p>
-              </div>
-              <div className="bg-warm/10 p-3">
-                <p className="font-display text-2xl font-black">{pendingClaims}</p>
-                <p className="text-xs font-bold text-warm">pending claims</p>
-              </div>
-            </div>
-
-            <div className="mt-4 border border-border bg-background p-3">
-              <div className="flex items-center gap-2 text-sm font-black">
-                <Bell className="h-4 w-4 text-primary" />
-                Notifications
-              </div>
-              <div className="mt-3 grid gap-2">
-                {notifications.map((note, index) => (
-                  <p key={`${note}-${index}`} className="border-l-2 border-primary bg-secondary/50 px-3 py-2 text-xs font-bold text-muted-foreground">
-                    {note}
-                  </p>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 border border-border bg-background p-3">
-              <p className="text-sm font-black">Admin queue</p>
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                {posts.reduce((total, post) => total + post.reports, 0)} reports waiting for spam or fake-post review.
+        {/* ── HERO SECTION ────────────────────────────────────────────────── */}
+        <div className="bg-card border-b border-border/50">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-display font-black tracking-tight text-foreground mb-1">Lost something? Found something?</h1>
+              <p className="text-muted-foreground text-xs max-w-lg leading-relaxed">
+                Post it here to notify the community. This feed helps Nexora students recover their belongings securely.
               </p>
             </div>
-          </aside>
-        </div>
 
-        {postOpen && (
-          <PostFormModal
-            onClose={() => setPostOpen(false)}
-            onSubmit={handleCreatePost}
-          />
-        )}
-
-        {detailPost && (
-          <DetailModal
-            post={detailPost}
-            commentText={commentText}
-            onCommentTextChange={setCommentText}
-            onClose={() => {
-              setDetailPostId(null);
-              setCommentText("");
-            }}
-            onClaim={() => setClaimPostId(detailPost.id)}
-            onShare={() => void handleShare(detailPost)}
-            onReport={() => {
-              updatePost(detailPost.id, (post) => ({ ...post, reports: post.reports + 1 }));
-              notify(`Report sent for admin review: ${detailPost.itemName}`);
-            }}
-            onAddComment={() => {
-              if (!commentText.trim()) return;
-              updatePost(detailPost.id, (post) => ({ ...post, comments: [...post.comments, commentText.trim()] }));
-              notify(`New comment on ${detailPost.itemName}.`);
-              setCommentText("");
-            }}
-            onClaimDecision={handleClaimDecision}
-          />
-        )}
-
-        {claimPost && (
-          <ClaimModal
-            post={claimPost}
-            answer={claimAnswer}
-            onAnswerChange={setClaimAnswer}
-            onClose={() => {
-              setClaimPostId(null);
-              setClaimAnswer("");
-            }}
-            onSubmit={handleClaimSubmit}
-          />
-        )}
-      </CampusPageShell>
-    </ModuleAccessBoundary>
-  );
-}
-
-function PostCard({
-  item,
-  onOpen,
-  onClaim,
-  onLike,
-  onSave,
-  onShare,
-  onReport,
-}: {
-  item: LostFoundPost;
-  onOpen: () => void;
-  onClaim: () => void;
-  onLike: () => void;
-  onSave: () => void;
-  onShare: () => void;
-  onReport: () => void;
-}) {
-  const recovered = item.status === "Recovered";
-
-  return (
-    <article className="paper-lift border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <button type="button" onClick={onOpen} className="h-16 w-16 shrink-0 overflow-hidden bg-secondary text-left">
-          {item.images[0] ? (
-            <img src={item.images[0]} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className={`grid h-full w-full place-items-center ${toneFor(item).soft}`}>
-              {recovered ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-            </span>
-          )}
-        </button>
-
-        <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <p className="text-xs font-black uppercase text-muted-foreground">
-            {item.type} · {timeAgo(item.createdAt)} · {item.category}
-          </p>
-          <h2 className="font-display text-2xl font-black">{item.itemName}</h2>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.location}</span>
-            <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{item.date} · {item.time}</span>
-            <span>{item.campus}</span>
-          </div>
-          <p className="mt-2 line-clamp-2 text-sm font-semibold text-muted-foreground">{item.description}</p>
-        </button>
-
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <span className="bg-secondary px-3 py-1 text-xs font-black text-primary">{statusLabel(item)}</span>
-          {!recovered && (
-            <button type="button" onClick={onClaim} className="bg-foreground px-3 py-2 text-xs font-black text-background">
-              {item.type === "Found" ? "Claim Item" : "I found this"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-        <div className="flex flex-wrap gap-3 text-xs font-bold text-muted-foreground">
-          <span>Posted by {item.postedBy}</span>
-          <span className="inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{item.claims.length} claims</span>
-          {item.verificationQuestion && <span className="inline-flex items-center gap-1"><ShieldQuestion className="h-3.5 w-3.5" />verification enabled</span>}
-        </div>
-        <div className="flex items-center gap-1">
-          <ActionButton onClick={onLike} icon={<Heart className="h-4 w-4" />} label={String(item.likes)} active={item.likes > 0} />
-          <ActionButton onClick={onSave} icon={<Check className="h-4 w-4" />} label={item.saved ? "Saved" : "Save"} active={item.saved} />
-          <ActionButton onClick={onShare} icon={<Share2 className="h-4 w-4" />} label="Share" />
-          <ActionButton onClick={onReport} icon={<Flag className="h-4 w-4" />} label="Report" />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function PostFormModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (values: FormState) => void }) {
-  const [values, setValues] = useState<FormState>(() => emptyForm());
-  const [error, setError] = useState("");
-  const isLost = values.type === "Lost";
-
-  const setValue = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setValues((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-
-    const required = [
-      values.itemName,
-      values.category,
-      values.description,
-      values.location,
-      values.date,
-      values.time,
-      values.campus,
-      values.building,
-      isLost ? values.floor : values.exactSpot,
-      isLost ? "ok" : values.storageLocation,
-    ];
-
-    if (required.some((field) => !field.trim())) {
-      setError("Please fill all required fields for this post.");
-      return;
-    }
-
-    onSubmit(values);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[80] grid place-items-center bg-foreground/25 p-4 backdrop-blur-sm">
-      <form onSubmit={handleSubmit} className="max-h-[90vh] w-full max-w-4xl overflow-y-auto border border-border bg-card p-4 shadow-glow">
-        <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
-          <div>
-            <p className="text-xs font-black uppercase text-success">Lost & Found post</p>
-            <h2 className="font-display text-3xl font-black">Post lost/found item</h2>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center border border-border bg-background">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {error && <div className="mt-3 bg-destructive/10 px-3 py-2 text-sm font-black text-destructive">{error}</div>}
-
-        <div className="mt-4 flex gap-2">
-          {(["Lost", "Found"] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setValue("type", type)}
-              className={`px-4 py-2 text-sm font-black ${values.type === type ? "bg-foreground text-background" : "border border-border bg-background"}`}
-            >
-              {type} item
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <Field label="Item Name"><input value={values.itemName} onChange={(event) => setValue("itemName", event.target.value)} /></Field>
-          <Field label="Category">
-            <select value={values.category} onChange={(event) => setValue("category", event.target.value)}>
-              <option value="">Select category</option>
-              {categories.map((item) => <option key={item}>{item}</option>)}
-            </select>
-          </Field>
-          <Field label={isLost ? "Last Seen Location" : "Found Location"}><input value={values.location} onChange={(event) => setValue("location", event.target.value)} placeholder={isLost ? "Hall 3" : "Library Desk"} /></Field>
-          <Field label="Campus"><input value={values.campus} onChange={(event) => setValue("campus", event.target.value)} /></Field>
-          <Field label="Date"><input type="date" value={values.date} onChange={(event) => setValue("date", event.target.value)} /></Field>
-          <Field label="Time"><input type="time" value={values.time} onChange={(event) => setValue("time", event.target.value)} /></Field>
-          <Field label="Building"><input value={values.building} onChange={(event) => setValue("building", event.target.value)} /></Field>
-          <Field label={isLost ? "Floor" : "Exact Spot"}><input value={isLost ? values.floor : values.exactSpot} onChange={(event) => setValue(isLost ? "floor" : "exactSpot", event.target.value)} /></Field>
-          {isLost ? (
-            <>
-              <Field label="Room / Hall (optional)"><input value={values.room} onChange={(event) => setValue("room", event.target.value)} /></Field>
-              <Field label="Reward (optional)"><input value={values.reward} onChange={(event) => setValue("reward", event.target.value)} placeholder="100" /></Field>
-            </>
-          ) : (
-            <Field label="Current Storage Location">
-              <select value={values.storageLocation} onChange={(event) => setValue("storageLocation", event.target.value)}>
-                <option value="">Select storage</option>
-                {storageLocations.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </Field>
-          )}
-          <Field label="Contact Preference">
-            <select value={values.contactPreference} onChange={(event) => setValue("contactPreference", event.target.value as ContactPreference)}>
-              <option>Chat only</option>
-              <option>Phone optional</option>
-              <option>Campus desk</option>
-            </select>
-          </Field>
-          <Field label="Phone (optional)"><input value={values.phone} onChange={(event) => setValue("phone", event.target.value)} /></Field>
-        </div>
-
-        <Field label="Description" className="mt-3">
-          <textarea value={values.description} onChange={(event) => setValue("description", event.target.value)} rows={4} />
-        </Field>
-
-        <div className="mt-4 border border-border bg-background p-3">
-          <div className="flex items-start gap-2">
-            <ShieldQuestion className="mt-1 h-4 w-4 text-primary" />
-            <div>
-              <h3 className="font-display text-xl font-black">Verification Question</h3>
-              <p className="text-sm font-semibold text-muted-foreground">Add one identifying detail that only the real owner would know. The answer is never shown publicly.</p>
+            <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+              <button 
+                onClick={() => handleOpenReport("Lost")}
+                className="w-full sm:w-auto px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <AlertCircle className="h-3.5 w-3.5" />
+                Report Lost Item
+              </button>
+              <button 
+                onClick={() => handleOpenReport("Found")}
+                className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Report Found Item
+              </button>
             </div>
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <Field label="Question (optional)"><input value={values.verificationQuestion} onChange={(event) => setValue("verificationQuestion", event.target.value)} placeholder="Which sticker is on the bottle?" /></Field>
-            <Field label="Private Answer (optional)"><input value={values.verificationAnswer} onChange={(event) => setValue("verificationAnswer", event.target.value)} placeholder="Only finder compares this" /></Field>
-          </div>
         </div>
 
-        <div className="mt-4 border border-border bg-background p-3">
-          <label className="flex cursor-pointer items-center gap-2 text-sm font-black">
-            <Camera className="h-4 w-4 text-primary" />
-            Upload multiple images
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(event) => {
-                const files = Array.from(event.target.files ?? []);
-                setValue("images", files.map((file) => URL.createObjectURL(file)));
-              }}
-            />
-          </label>
-          {values.images.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {values.images.map((src) => (
-                <img key={src} src={src} alt="" className="h-16 w-16 object-cover" />
+        {/* ── STICKY FILTER BAR ───────────────────────────────────────────── */}
+        <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm py-3">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <div className="flex bg-secondary/30 p-1 rounded-lg border border-border/50 shrink-0 w-max overflow-x-auto [scrollbar-width:none]">
+              {["All", "Lost", "Found", "Recovered", "Searching"].map(type => (
+                <button 
+                  key={type}
+                  onClick={() => setActiveType(type as any)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all whitespace-nowrap ${
+                    activeType === type 
+                      ? type === "Lost" ? "bg-rose-500 text-white shadow-sm" 
+                        : type === "Found" ? "bg-emerald-500 text-white shadow-sm" 
+                        : type === "Recovered" ? "bg-blue-500 text-white shadow-sm"
+                        : "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {type}
+                </button>
               ))}
             </div>
-          )}
-        </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-black">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={values.chatOnly} onChange={(event) => setValue("chatOnly", event.target.checked)} /> Chat only</label>
-          <label className="flex items-center gap-2"><input type="checkbox" checked={values.anonymous} onChange={(event) => setValue("anonymous", event.target.checked)} /> Anonymous mode</label>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2 border-t border-border pt-4">
-          <button type="button" onClick={onClose} className="border border-border bg-background px-4 py-2 text-sm font-black">Cancel</button>
-          <button type="submit" className="bg-foreground px-5 py-2 text-sm font-black text-background">Publish post</button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function DetailModal({
-  post,
-  commentText,
-  onCommentTextChange,
-  onClose,
-  onClaim,
-  onShare,
-  onReport,
-  onAddComment,
-  onClaimDecision,
-}: {
-  post: LostFoundPost;
-  commentText: string;
-  onCommentTextChange: (value: string) => void;
-  onClose: () => void;
-  onClaim: () => void;
-  onShare: () => void;
-  onReport: () => void;
-  onAddComment: () => void;
-  onClaimDecision: (postId: string, claimId: string, status: ClaimRequest["status"]) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-foreground/25 p-4 backdrop-blur-sm">
-      <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto border border-border bg-card p-4 shadow-glow">
-        <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
-          <div>
-            <p className="text-xs font-black uppercase text-muted-foreground">{post.type} · {post.category} · {post.status}</p>
-            <h2 className="font-display text-3xl font-black">{post.itemName}</h2>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center border border-border bg-background"><X className="h-4 w-4" /></button>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div>
-            <div className="grid min-h-56 place-items-center border border-border bg-background">
-              {post.images.length ? (
-                <div className="grid w-full gap-2 p-2 sm:grid-cols-2">
-                  {post.images.map((src) => <img key={src} src={src} alt="" className="h-56 w-full object-cover" />)}
-                </div>
-              ) : (
-                <Camera className="h-10 w-10 text-muted-foreground" />
-              )}
-            </div>
-            <div className="mt-4 border border-border bg-background p-4">
-              <h3 className="font-display text-xl font-black">Description</h3>
-              <p className="mt-2 text-sm font-semibold text-muted-foreground">{post.description}</p>
-            </div>
-            <div className="mt-4 border border-border bg-background p-4">
-              <h3 className="font-display text-xl font-black">Timeline</h3>
-              <div className="mt-3 grid gap-2 text-sm font-bold text-muted-foreground">
-                <p>Posted {timeAgo(post.createdAt)}</p>
-                <p>{post.type === "Lost" ? "Last seen" : "Found"} on {post.date} at {post.time}</p>
-                {post.claims.map((claim) => (
-                  <p key={claim.id}>Claim from {claim.claimant}: {claim.status}</p>
-                ))}
+            <div className="flex items-center gap-3 overflow-x-auto [scrollbar-width:none]">
+              <div className="relative shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search feed..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-48 h-9 pl-9 pr-3 bg-secondary/30 border border-border/50 rounded-lg focus:outline-none focus:border-primary focus:bg-background transition-colors text-sm font-medium"
+                />
               </div>
-            </div>
-            <div className="mt-4 border border-border bg-background p-4">
-              <h3 className="font-display text-xl font-black">Comments</h3>
-              <div className="mt-3 grid gap-2">
-                {post.comments.length ? post.comments.map((comment, index) => (
-                  <p key={`${comment}-${index}`} className="bg-card px-3 py-2 text-sm font-semibold text-muted-foreground">{comment}</p>
-                )) : <p className="text-sm font-semibold text-muted-foreground">No comments yet.</p>}
-              </div>
-              <div className="mt-3 flex gap-2">
-                <input value={commentText} onChange={(event) => onCommentTextChange(event.target.value)} className="flex-1 border border-border bg-card px-3 py-2 text-sm font-semibold outline-none" placeholder="Add a useful clue..." />
-                <button type="button" onClick={onAddComment} className="bg-foreground px-4 py-2 text-sm font-black text-background">Comment</button>
-              </div>
+
+              <select
+                value={activeCampus}
+                onChange={e => setActiveCampus(e.target.value)}
+                className="h-9 px-3 pr-8 bg-secondary/30 border border-border/50 rounded-lg text-sm font-medium focus:outline-none focus:border-primary shrink-0 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat"
+              >
+                <option value="All">All Campuses</option>
+                <option value="Nexora Main Campus">Main Campus</option>
+                <option value="South Campus">South Campus</option>
+                <option value="North Campus">North Campus</option>
+              </select>
+
+              <select
+                value={activeCategory}
+                onChange={e => setActiveCategory(e.target.value)}
+                className="h-9 px-3 pr-8 bg-secondary/30 border border-border/50 rounded-lg text-sm font-medium focus:outline-none focus:border-primary shrink-0 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat"
+              >
+                <option value="All">All Categories</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="h-9 px-3 pr-8 bg-secondary/30 border border-border/50 rounded-lg text-sm font-medium focus:outline-none focus:border-primary shrink-0 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat"
+              >
+                <option value="Recent">Most Recent</option>
+                <option value="Top">Top Activity</option>
+              </select>
             </div>
           </div>
+        </div>
 
-          <aside className="h-fit border border-border bg-background p-4">
-            <h3 className="font-display text-xl font-black">Location</h3>
-            <div className="mt-3 grid gap-2 text-sm font-bold text-muted-foreground">
-              <p>{post.location}</p>
-              <p>{post.campus}</p>
-              <p>{post.building}{post.floor && ` · Floor ${post.floor}`}{post.room && ` · ${post.room}`}</p>
-              {post.exactSpot && <p>Exact spot: {post.exactSpot}</p>}
-              {post.storageLocation && <p>Stored at: {post.storageLocation}</p>}
-            </div>
-
-            <div className="mt-4 border-t border-border pt-4">
-              <h3 className="font-display text-xl font-black">Contact</h3>
-              <p className="mt-2 text-sm font-bold text-muted-foreground">Posted by {post.postedBy}</p>
-              <p className="text-sm font-bold text-muted-foreground">{post.contactPreference}</p>
-              {post.phone && <p className="text-sm font-bold text-muted-foreground">{post.phone}</p>}
-            </div>
-
-            {post.verificationQuestion && (
-              <div className="mt-4 bg-primary/10 p-3">
-                <p className="text-xs font-black uppercase text-primary">Verification enabled</p>
-                <p className="mt-1 text-sm font-bold text-foreground">{post.verificationQuestion}</p>
+        {/* ── 70/30 SPLIT CONTENT ─────────────────────────────────────────── */}
+        <main className="max-w-[1100px] mx-auto w-full px-4 sm:px-6 pt-8 pb-16 flex gap-8 relative">
+          
+          {/* LEFT 70% - FEED */}
+          <div className="flex-1 w-full lg:max-w-[70%] flex flex-col gap-6">
+            
+            {/* Create Post Input Trigger (Reddit style) */}
+            <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-4 shadow-sm hover:border-border transition-colors cursor-text" onClick={() => handleOpenReport("Lost")}>
+              <img src="https://ui-avatars.com/api/?name=User&background=333&color=fff" alt="Profile" className="h-10 w-10 rounded-full object-cover border border-border" />
+              <div className="flex-1 h-11 bg-secondary/30 hover:bg-secondary/50 transition-colors rounded-full border border-border/50 px-4 flex items-center text-muted-foreground text-sm font-medium">
+                Create a new lost or found report...
               </div>
-            )}
-
-            <div className="mt-4 grid gap-2">
-              {post.status !== "Recovered" && <button type="button" onClick={onClaim} className="bg-foreground px-4 py-3 text-sm font-black text-background">Claim Item</button>}
-              <button type="button" className="border border-border bg-card px-4 py-3 text-sm font-black"><MessageCircle className="mr-2 inline h-4 w-4" />Chat</button>
-              <button type="button" onClick={onShare} className="border border-border bg-card px-4 py-3 text-sm font-black"><Share2 className="mr-2 inline h-4 w-4" />Share</button>
-              <button type="button" onClick={onReport} className="border border-border bg-card px-4 py-3 text-sm font-black text-destructive"><Flag className="mr-2 inline h-4 w-4" />Report</button>
+              <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground transition-colors">
+                <Camera className="h-5 w-5" />
+              </button>
             </div>
 
-            {post.claims.length > 0 && (
-              <div className="mt-4 border-t border-border pt-4">
-                <h3 className="font-display text-xl font-black">Claims</h3>
-                <div className="mt-3 grid gap-2">
-                  {post.claims.map((claim) => (
-                    <div key={claim.id} className="border border-border bg-card p-3">
-                      <p className="text-sm font-black">{claim.claimant}</p>
-                      <p className="mt-1 text-xs font-semibold text-muted-foreground">Answer: {claim.answer}</p>
-                      <p className="mt-1 text-xs font-black text-primary">{claim.status}</p>
-                      {claim.status === "Pending" && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          <button type="button" onClick={() => onClaimDecision(post.id, claim.id, "Accepted")} className="bg-success/15 px-2 py-1 text-xs font-black text-success">Accept</button>
-                          <button type="button" onClick={() => onClaimDecision(post.id, claim.id, "Rejected")} className="bg-destructive/10 px-2 py-1 text-xs font-black text-destructive">Reject</button>
-                          <button type="button" onClick={() => onClaimDecision(post.id, claim.id, "More details")} className="bg-secondary px-2 py-1 text-xs font-black text-primary">More Details</button>
+            {filteredPosts.length === 0 ? (
+              <div className="bg-card border border-border/50 rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
+                <Search className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-xl font-bold mb-2">No reports found</h3>
+                <p className="text-muted-foreground text-sm">We couldn't find any items matching your filters.</p>
+              </div>
+            ) : (
+              filteredPosts.map(post => (
+                <div key={post.id} className="bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                  
+                  {/* Card Header */}
+                  <div className="p-4 sm:p-5 flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={post.postedByAvatar} 
+                        alt={post.postedBy} 
+                        className="h-12 w-12 rounded-full object-cover border border-border"
+                      />
+                      <div>
+                        <h3 className="font-bold text-foreground text-sm sm:text-base leading-tight hover:underline cursor-pointer">
+                          {post.postedBy}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 font-medium">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {timeAgo(post.createdAt)}</span>
+                          <span className="h-1 w-1 bg-muted-foreground/30 rounded-full" />
+                          <span className="text-primary font-bold hover:underline cursor-pointer">{post.category}</span>
                         </div>
+                      </div>
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground transition-colors focus:outline-none">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-card border-border/50">
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-foreground hover:bg-secondary"><Share2 className="h-4 w-4" /> Share Post</DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-foreground hover:bg-secondary"><Flag className="h-4 w-4" /> Report Post</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="px-4 sm:px-5 pb-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      {post.type === "Lost" && <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-500 border border-rose-500/20">Lost Item</span>}
+                      {post.type === "Found" && <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Found Item</span>}
+                      {post.type === "Recovered" && <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">Recovered</span>}
+                      
+                      <h2 className="text-lg font-bold font-display leading-tight">
+                        <Link to="/lost-found/$id" params={{ id: post.id }} className="hover:text-primary transition-colors">
+                          {post.itemName}
+                        </Link>
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4 text-sm font-medium text-muted-foreground bg-secondary/20 p-3 rounded-lg border border-border/30">
+                      <div className="flex items-center gap-2 text-foreground/80">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        {post.location}, {post.campus}
+                      </div>
+                      <div className="hidden sm:block h-4 w-px bg-border/50" />
+                      <div className="flex items-center gap-2 text-foreground/80">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        {post.date} at {post.time}
+                      </div>
+                    </div>
+
+                    <p className="text-foreground/90 text-sm leading-relaxed mb-4 whitespace-pre-wrap">
+                      {post.description}
+                    </p>
+                  </div>
+
+                  {/* Images */}
+                  {post.images && post.images.length > 0 && (
+                    <div className="px-4 sm:px-5 pb-3">
+                      <Link to="/lost-found/$id" params={{ id: post.id }} className="block rounded-xl overflow-hidden border border-border/50 cursor-pointer group">
+                        <img 
+                          src={post.images[0]} 
+                          alt="Post attachment" 
+                          className="w-full max-h-[350px] object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Actions Footer */}
+                  <div className="p-2 sm:p-3 px-4 sm:px-5 flex flex-wrap items-center justify-between border-t border-border/50">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors text-xs font-bold">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span>{post.likes}</span>
+                      </button>
+                      <Link to="/lost-found/$id" params={{ id: post.id }} className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors text-xs font-bold">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{post.comments}</span>
+                      </Link>
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors text-xs font-bold hidden sm:flex">
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Share</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center">
+                      {post.type === "Lost" ? (
+                        <button className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1.5">
+                          I Found This
+                        </button>
+                      ) : post.type === "Found" ? (
+                        <button className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1.5">
+                          Claim Item
+                        </button>
+                      ) : (
+                        <button className="px-4 py-1.5 bg-secondary/50 text-foreground cursor-default rounded-md font-bold text-xs flex items-center gap-1.5 border border-border/50">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                          Recovered
+                        </button>
                       )}
                     </div>
-                  ))}
+                  </div>
+
                 </div>
-              </div>
+              ))
             )}
-          </aside>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ClaimModal({ post, answer, onAnswerChange, onClose, onSubmit }: {
-  post: LostFoundPost;
-  answer: string;
-  onAnswerChange: (value: string) => void;
-  onClose: () => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[90] grid place-items-center bg-foreground/25 p-4 backdrop-blur-sm">
-      <section className="w-full max-w-lg border border-border bg-card p-4 shadow-glow">
-        <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
-          <div>
-            <p className="text-xs font-black uppercase text-primary">Claim item</p>
-            <h2 className="font-display text-2xl font-black">{post.itemName}</h2>
           </div>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center border border-border bg-background"><X className="h-4 w-4" /></button>
-        </div>
-        <div className="mt-4">
-          <p className="text-sm font-semibold text-muted-foreground">
-            {post.verificationQuestion || "Add a detail that helps the finder verify ownership."}
-          </p>
-          <textarea value={answer} onChange={(event) => onAnswerChange(event.target.value)} rows={4} className="mt-3 w-full border border-border bg-background px-3 py-2 text-sm font-semibold outline-none" placeholder="Your verification answer..." />
-          <p className="mt-2 text-xs font-semibold text-muted-foreground">Your answer is sent only to the finder/post owner.</p>
-        </div>
-        <div className="mt-4 flex justify-end gap-2 border-t border-border pt-4">
-          <button type="button" onClick={onClose} className="border border-border bg-background px-4 py-2 text-sm font-black">Cancel</button>
-          <button type="button" onClick={onSubmit} className="bg-foreground px-4 py-2 text-sm font-black text-background">Submit Claim</button>
-        </div>
-      </section>
-    </div>
-  );
-}
 
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return (
-    <label className={`grid gap-1 text-sm font-black ${className}`}>
-      <span>{label}</span>
-      <div className="[&_input]:w-full [&_input]:border [&_input]:border-border [&_input]:bg-background [&_input]:px-3 [&_input]:py-2 [&_input]:font-semibold [&_input]:outline-none [&_select]:w-full [&_select]:border [&_select]:border-border [&_select]:bg-background [&_select]:px-3 [&_select]:py-2 [&_select]:font-semibold [&_select]:outline-none [&_textarea]:w-full [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-background [&_textarea]:px-3 [&_textarea]:py-2 [&_textarea]:font-semibold [&_textarea]:outline-none">
-        {children}
+          {/* RIGHT 30% - SIDEBAR */}
+          <aside className="hidden lg:flex w-[30%] flex-col gap-6 sticky top-36 h-max">
+            
+            {/* Action Card */}
+            <div className="bg-card border border-border/50 rounded-xl p-5 shadow-sm">
+              <h3 className="font-display font-bold text-lg mb-4 text-foreground">Need help finding something?</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+                Post it on the community feed. Over 5,000 students view the Nexora Notice Board daily.
+              </p>
+              <button 
+                onClick={() => handleOpenReport("Lost")}
+                className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-sm transition-colors mb-2"
+              >
+                Create a Report
+              </button>
+            </div>
+
+            {/* Smart Matches (Mock) */}
+            <div className="bg-card border border-border/50 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-indigo-400" />
+                <h3 className="font-display font-bold text-base text-foreground">Smart Matches</h3>
+              </div>
+              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
+                <p className="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-2">New Potential Match!</p>
+                <p className="text-sm text-foreground/90 leading-relaxed mb-3">
+                  Someone just found a <strong>Wallet</strong> in the <strong>Library</strong>. It matches your recent lost report.
+                </p>
+                <Link to="/lost-found/$id" params={{ id: "lf-2" }} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
+                  View Item <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Safety Tips */}
+            <div className="bg-card border border-border/50 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                <h3 className="font-display font-bold text-base text-foreground">Community Guidelines</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0" />
+                  <span className="text-xs font-medium text-muted-foreground leading-relaxed">Always meet in public, well-lit campus areas for item handovers.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0" />
+                  <span className="text-xs font-medium text-muted-foreground leading-relaxed">Ask verification questions to ensure the item belongs to the claimant.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0" />
+                  <span className="text-xs font-medium text-muted-foreground leading-relaxed">Do not pay "finder's fees" digitally beforehand.</span>
+                </li>
+              </ul>
+            </div>
+
+          </aside>
+
+        </main>
       </div>
-    </label>
-  );
-}
 
-function ActionButton({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-1 border px-2.5 py-1.5 text-xs font-black transition ${
-        active ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+      {/* ── REPORT MODAL ────────────────────────────────────────────────── */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsReportModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-card border border-border/50 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <div className="p-4 border-b border-border/50 flex items-center justify-between bg-secondary/10 shrink-0">
+              <h2 className="text-lg font-bold font-display flex items-center gap-2">
+                {reportType === "Lost" ? (
+                  <><AlertCircle className="h-4 w-4 text-rose-500" /> Post a Lost Report</>
+                ) : (
+                  <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Post a Found Report</>
+                )}
+              </h2>
+              <button 
+                onClick={() => setIsReportModalOpen(false)}
+                className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-secondary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-function CampusPageShell({ label, title, subtitle, icon: Icon, children }: { label: string; title: string; subtitle: string; icon: typeof MapPin; children: React.ReactNode }) {
-  return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="commons-wall mb-5 border border-border p-5 shadow-soft">
-          <span className="inline-flex items-center gap-2 bg-success/10 px-3 py-1 text-xs font-black uppercase text-success"><Icon className="h-4 w-4" />{label}</span>
-          <h1 className="mt-3 font-display text-4xl font-black sm:text-6xl">{title}</h1>
-          <p className="mt-3 max-w-2xl text-sm font-semibold text-muted-foreground sm:text-base">{subtitle}</p>
+            <div className="p-5 overflow-y-auto custom-scrollbar">
+              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); toast.success("Report submitted to feed!"); setIsReportModalOpen(false); }}>
+                
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold">Item Name *</label>
+                  <input type="text" required placeholder="e.g. Black Leather Wallet" className="w-full h-10 px-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors text-sm" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">Category *</label>
+                    <select required className="w-full h-10 px-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors appearance-none text-sm bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat">
+                      <option value="">Select category...</option>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">Date {reportType === "Lost" ? "Lost" : "Found"} *</label>
+                    <input type="date" required className="w-full h-10 px-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors text-sm" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">Campus *</label>
+                    <select required className="w-full h-10 px-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors appearance-none text-sm bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat">
+                      <option value="">Select campus...</option>
+                      <option>Nexora Main Campus</option>
+                      <option>South Campus</option>
+                      <option>North Campus</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">Exact Location *</label>
+                    <input type="text" required placeholder="e.g. Library Cafe table 4" className="w-full h-10 px-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors text-sm" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold">Description *</label>
+                  <textarea required rows={4} placeholder="Write your post... Be sure to include identifying details!" className="w-full p-3 bg-background border border-border/50 rounded-lg focus:border-primary focus:outline-none transition-colors resize-none text-sm" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold">Attach Image</label>
+                  <div className="w-full h-24 border border-dashed border-border/50 rounded-lg flex flex-col items-center justify-center hover:bg-secondary/30 transition-colors cursor-pointer group">
+                    <Camera className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors mb-1.5" />
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">Add photos to your post</span>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/50 flex justify-end gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsReportModalOpen(false)}
+                    className="px-4 py-2 rounded-lg font-bold text-sm hover:bg-secondary transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2"
+                  >
+                    Post to Feed
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+          </div>
         </div>
-        {children}
-      </section>
-    </main>
+      )}
+    </ModuleAccessBoundary>
   );
-}
-
-function emptyForm(): FormState {
-  return {
-    type: "Lost",
-    itemName: "",
-    category: "",
-    description: "",
-    location: "",
-    date: today,
-    time: "10:00",
-    campus: "Nexora Main Campus",
-    building: "",
-    floor: "",
-    room: "",
-    exactSpot: "",
-    storageLocation: "",
-    reward: "",
-    contactPreference: "Chat only",
-    phone: "",
-    chatOnly: true,
-    anonymous: false,
-    verificationQuestion: "",
-    verificationAnswer: "",
-    images: [],
-  };
-}
-
-function toneFor(post: LostFoundPost) {
-  if (post.status === "Recovered") return { soft: "bg-success/15 text-success" };
-  if (post.type === "Found") return { soft: "bg-electric/15 text-electric" };
-  return { soft: "bg-warm/15 text-warm" };
-}
-
-function statusLabel(post: LostFoundPost) {
-  if (post.status === "Matched" && post.claims.length) return `${post.claims.length} possible match${post.claims.length > 1 ? "es" : ""}`;
-  if (post.status === "Claim Requested") return "Possible owner found";
-  if (post.status === "Recovered") return "Returned";
-  return post.status;
-}
-
-function minutesAgo(minutes: number) {
-  return new Date(Date.now() - minutes * 60 * 1000).toISOString();
-}
-
-function timeAgo(dateString: string) {
-  const diff = Math.max(0, Date.now() - new Date(dateString).getTime());
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${Math.max(1, minutes)}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
 }

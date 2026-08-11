@@ -19,6 +19,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MarketplacePremiumRouteImport } from './routes/marketplace-premium'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as LostFoundRouteImport } from './routes/lost-found'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DatingRouteImport } from './routes/dating'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -29,6 +30,7 @@ import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/
 import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
 import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
 import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
+import { Route as LostFoundIdRouteImport } from './routes/lost-found_.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -86,6 +88,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LostFoundRoute = LostFoundRouteImport.update({
+  id: '/lost-found',
+  path: '/lost-found',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -136,6 +143,11 @@ const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
   path: '/backup',
   getParentRoute: () => MarketplaceRoute,
 } as any)
+const LostFoundIdRoute = LostFoundIdRouteImport.update({
+  id: '/lost-found_/$id',
+  path: '/lost-found/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -174,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
+  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -187,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -202,6 +216,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
+  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -215,6 +230,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -231,6 +247,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
+  '/lost-found': typeof LostFoundRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/marketplace-premium': typeof MarketplacePremiumRoute
   '/notes': typeof NotesRoute
@@ -244,6 +261,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found_/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace_/help': typeof MarketplaceHelpRoute
   '/marketplace_/settings': typeof MarketplaceSettingsRoute
@@ -261,6 +279,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
+    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -274,6 +293,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found/$id'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -289,6 +309,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
+    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -302,6 +323,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found/$id'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -317,6 +339,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dating'
     | '/events'
+    | '/lost-found'
     | '/marketplace'
     | '/marketplace-premium'
     | '/notes'
@@ -330,6 +353,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found_/$id'
     | '/marketplace/backup'
     | '/marketplace_/help'
     | '/marketplace_/settings'
@@ -346,6 +370,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DatingRoute: typeof DatingRoute
   EventsRoute: typeof EventsRoute
+  LostFoundRoute: typeof LostFoundRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   MarketplacePremiumRoute: typeof MarketplacePremiumRoute
   NotesRoute: typeof NotesRoute
@@ -356,6 +381,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   TuitionRoute: typeof TuitionRoute
+  LostFoundIdRoute: typeof LostFoundIdRoute
   MarketplaceHelpRoute: typeof MarketplaceHelpRoute
   MarketplaceSettingsRoute: typeof MarketplaceSettingsRoute
   OnboardingCampusSpacesRoute: typeof OnboardingCampusSpacesRoute
@@ -436,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lost-found': {
+      id: '/lost-found'
+      path: '/lost-found'
+      fullPath: '/lost-found'
+      preLoaderRoute: typeof LostFoundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events': {
       id: '/events'
       path: '/events'
@@ -505,6 +538,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/marketplace/backup'
       preLoaderRoute: typeof MarketplaceBackupRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/lost-found_/$id': {
+      id: '/lost-found_/$id'
+      path: '/lost-found/$id'
+      fullPath: '/lost-found/$id'
+      preLoaderRoute: typeof LostFoundIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -584,6 +624,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DatingRoute: DatingRoute,
   EventsRoute: EventsRoute,
+  LostFoundRoute: LostFoundRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
   MarketplacePremiumRoute: MarketplacePremiumRoute,
   NotesRoute: NotesRoute,
@@ -594,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   TuitionRoute: TuitionRoute,
+  LostFoundIdRoute: LostFoundIdRoute,
   MarketplaceHelpRoute: MarketplaceHelpRoute,
   MarketplaceSettingsRoute: MarketplaceSettingsRoute,
   OnboardingCampusSpacesRoute: OnboardingCampusSpacesRoute,
