@@ -260,20 +260,19 @@ function Index() {
       </section>
       {accessModal}
       {onboardingOpen && (
-        <div className="module-onboarding-overlay" role="dialog" aria-modal="true" aria-label="Choose your campus spaces">
-          <section className="module-onboarding-card">
-            <div className="module-onboarding-header">
-              <span>Choose your campus spaces</span>
-              <h2>Choose your campus spaces</h2>
-              <p>Select the Nexora sections you want active for your account.</p>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choose your campus spaces">
+          <section className="relative w-full max-w-[540px] overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <div className="mb-6">
+              <h2 className="mt-4 text-2xl font-black text-foreground">Choose your campus spaces</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Select the Nexora sections you want active for your account.</p>
             </div>
 
-            {error && <div className="auth-status-message auth-status-error mt-3">{error}</div>}
+            {error && <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</div>}
 
-            <div className="module-onboarding-form">
+            <div className="mb-2">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-sm font-black text-foreground">Pick the spaces you want to use</p>
-                <button type="button" onClick={toggleAllSpaces} className="module-onboarding-skip px-3 py-2">
+                <p className="text-sm font-bold text-foreground">Pick the spaces you want to use</p>
+                <button type="button" onClick={toggleAllSpaces} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-muted-foreground hover:bg-muted transition-colors">
                   {isAllSelected ? "Clear all" : "Select all"}
                 </button>
               </div>
@@ -286,26 +285,28 @@ function Index() {
                       key={module.id}
                       type="button"
                       onClick={() => toggleSpace(module.id as CampusModuleId)}
-                      className={`rounded-2xl border px-3 py-3 text-left text-sm font-black transition ${
-                        checked ? "border-primary bg-primary/10 text-foreground" : "border-border bg-background text-muted-foreground"
+                      className={`rounded-xl border p-3 text-left transition-all ${
+                        checked ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted/50 hover:border-foreground/30"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span>{module.label}</span>
-                        <span className={`h-5 w-5 rounded-full border ${checked ? "border-primary bg-primary" : "border-border"}`} />
+                        <span className={`text-sm font-bold ${checked ? "text-primary" : "text-foreground"}`}>{module.label}</span>
+                        <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${checked ? "border-primary bg-primary" : "border-muted-foreground"}`}>
+                          {checked && <Check className="h-3 w-3 text-primary-foreground" />}
+                        </span>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-muted-foreground">{module.description}</p>
+                      <p className={`mt-1 text-xs ${checked ? "text-primary/80" : "text-muted-foreground"}`}>{module.description}</p>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="module-onboarding-actions">
-              <button type="button" onClick={() => setOnboardingOpen(false)} className="module-onboarding-skip">
+            <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-border/50">
+              <button type="button" onClick={() => setOnboardingOpen(false)} className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted transition-colors">
                 Skip for now
               </button>
-              <button type="button" onClick={() => void handleSaveSpaces()} disabled={savingSpaces} className="module-onboarding-save">
+              <button type="button" onClick={() => void handleSaveSpaces()} disabled={savingSpaces} className="flex min-w-[120px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
                 {savingSpaces ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
