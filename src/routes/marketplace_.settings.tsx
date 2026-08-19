@@ -164,16 +164,19 @@ function MarketplaceSettingsPage() {
       </header>
 
       {/* ── MAIN CONTENT ───────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-16">
         {/* Back Link */}
         <div className="mb-8">
-          <Link
-            to="/marketplace"
+          <button
+            onClick={() => {
+              if (window.history.length > 2) window.history.back();
+              else navigate({ to: "/marketplace" });
+            }}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Marketplace
-          </Link>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -200,7 +203,7 @@ function MarketplaceSettingsPage() {
           </div>
 
           {/* Settings Panel Body */}
-          <div className="md:col-span-3 min-h-[50vh] rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
+          <div className="md:col-span-3 min-h-[50vh] rounded-2xl border border-border/50 bg-card p-5 sm:p-6">
             {/* Tab: PREFERENCES */}
             {activeTab === "preferences" && (
               <div className="space-y-8 animate-in fade-in duration-200">

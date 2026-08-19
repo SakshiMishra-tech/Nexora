@@ -28,8 +28,6 @@ type AuthContextValue = {
   profileChecked: boolean;
   profileComplete: boolean;
   signInWithOAuth: (provider: Extract<Provider, "google" | "github">) => Promise<OAuthResponse>;
-  signInWithPassword: (email: string, password: string) => Promise<AuthResponse>;
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   refreshProfile: () => Promise<UserProfile | null>;
 };
@@ -81,14 +79,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    let currentUser = user;
+
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
 
       setSession(data.session);
+      currentUser = data.session?.user ?? null;
       setLoading(false);
 
-      if (data.session?.user) {
-        await fetchProfile(data.session.user.id);
+      if (currentUser) {
+        await fetchProfile(currentUser.id);
       } else {
         setProfile(null);
         setProfileChecked(true);
@@ -97,15 +98,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
 
-      if (nextSession?.user) {
-        void fetchProfile(nextSession.user.id);
-      } else {
-        setProfile(null);
-        setProfileChecked(true);
+      const nextUser = nextSession?.user ?? null;
+      // Only fetch profile if the user ID has changed (e.g., login or initial load)
+      if (nextUser?.id !== currentUser?.id) {
+        currentUser = nextUser;
+        if (nextUser) {
+          void fetchProfile(nextUser.id);
+        } else {
+          setProfile(null);
+          setProfileChecked(true);
+        }
       }
     });
 
@@ -126,22 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const signInWithPassword = useCallback(
-    (email: string, password: string) =>
-      supabase.auth.signInWithPassword({
-        email,
-        password,
-      }),
-    [],
-  );
 
-  const resetPassword = useCallback(
-    (email: string) =>
-      supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: getAuthRedirectUrl(),
-      }),
-    [],
-  );
 
   const signOut = useCallback(() => supabase.auth.signOut(), []);
 
@@ -155,8 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileChecked,
       profileComplete: isProfileComplete(profile),
       signInWithOAuth,
-      signInWithPassword,
-      resetPassword,
       signOut,
       refreshProfile,
     }),
@@ -166,9 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileChecked,
       profileLoading,
       refreshProfile,
-      resetPassword,
       session,
-      signInWithPassword,
       signInWithOAuth,
       signOut,
       user,

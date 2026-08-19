@@ -80,7 +80,10 @@ function SellerProfilePage() {
         <User className="h-12 w-12 text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold mb-2">Seller Not Found</h1>
         <p className="text-muted-foreground mb-6">This user may have deleted their account.</p>
-        <button onClick={() => navigate({ to: "/marketplace" })} className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold">
+        <button onClick={() => {
+          if (window.history.length > 2) window.history.back();
+          else navigate({ to: "/marketplace" });
+        }} className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold">
           Back to Marketplace
         </button>
       </div>
@@ -91,9 +94,12 @@ function SellerProfilePage() {
     <div className="min-h-screen bg-[#030712] text-foreground font-sans">
       {/* ── TOPBAR ─────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-4 sm:px-6 bg-[#030712]/95 backdrop-blur-md border-b border-border/50">
-        <Link to="/marketplace" className="h-10 w-10 rounded-full flex items-center justify-center bg-secondary/50 hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+        <button onClick={() => {
+          if (window.history.length > 2) window.history.back();
+          else navigate({ to: "/marketplace" });
+        }} className="h-10 w-10 rounded-full flex items-center justify-center bg-secondary/50 hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <div className="mx-auto font-bold text-sm absolute left-1/2 -translate-x-1/2">
           Seller Profile
         </div>

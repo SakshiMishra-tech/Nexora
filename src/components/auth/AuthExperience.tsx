@@ -131,7 +131,7 @@ function GitHubIcon({ className = "w-4 h-4" }: { className?: string }) {
 
 export function AuthExperience({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
-  const { user, loading, profileLoading, profileChecked, signInWithPassword, resetPassword } = useAuth();
+  const { user, loading, profileLoading, profileChecked } = useAuth();
 
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
@@ -159,30 +159,14 @@ export function AuthExperience({ mode }: { mode: AuthMode }) {
   const fullName = [trimmedFirstName, trimmedSurname].filter(Boolean).join(" ");
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
 
-  const passwordChecks = useMemo(
-    () => ({
-      minLength: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /\d/.test(password),
-      special: /[^A-Za-z0-9]/.test(password),
-    }),
-    [password],
-  );
-  const passwordScore = useMemo(() => {
-    return Object.values(passwordChecks).filter(Boolean).length;
-  }, [passwordChecks]);
-  const passwordValid = passwordScore >= 4 && passwordChecks.minLength;
-  const confirmPasswordValid = Boolean(confirmPassword) && password === confirmPassword;
-
   const signupFormValid =
     !isSignup ||
     (Boolean(trimmedFirstName) &&
       Boolean(trimmedEmail) &&
       emailValid &&
       Boolean(trimmedCollegeName) &&
-      passwordValid &&
-      confirmPasswordValid &&
+      Boolean(password) &&
+      password === confirmPassword &&
       agreedToTerms);
 
   useEffect(() => {
@@ -226,28 +210,21 @@ export function AuthExperience({ mode }: { mode: AuthMode }) {
     }
   };
 
-  const handlePasswordAuth = async (event: FormEvent<HTMLFormElement>) => {
+  const handleAuthSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setNotice("");
 
     if (!isSignup) {
-      if (!trimmedEmail || !password) {
-        setError("Email and password are required.");
+      if (!trimmedEmail) {
+        setError("Email is required.");
         return;
       }
-
-      setPending("email");
-      const result = await signInWithPassword(trimmedEmail, password);
-
-      if (result.error) {
-        setError(getFriendlyErrorMessage(result.error));
-        setPending(null);
+      if (!password) {
+        setError("Password is required.");
+        return;
       }
-      return;
-    }
-
-    if (isSignup) {
+    } else {
       if (!trimmedFirstName) {
         setError("First name is required.");
         return;
@@ -264,11 +241,11 @@ export function AuthExperience({ mode }: { mode: AuthMode }) {
         setError("College name is required.");
         return;
       }
-      if (!passwordValid) {
-        setError("Password must be at least 8 characters with letters, numbers, and symbols.");
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
         return;
       }
-      if (!confirmPasswordValid) {
+      if (password !== confirmPassword) {
         setError("Passwords do not match.");
         return;
       }
@@ -276,78 +253,52 @@ export function AuthExperience({ mode }: { mode: AuthMode }) {
         setError("Please accept the Terms & Conditions and Privacy Policy to continue.");
         return;
       }
+    }
 
-      setPending("email");
-      try {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    setPending("email");
+    try {
+      if (isSignup) {
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email: trimmedEmail,
           password: password,
           options: {
             data: {
-              first_name: trimmedFirstName,
-              last_name: trimmedSurname,
               full_name: fullName || trimmedFirstName,
               college_name: trimmedCollegeName,
-            },
-          },
+            }
+          }
         });
 
-        if (signUpError) {
-          throw signUpError;
-        }
-
-        if (signUpData.user) {
+        if (signUpError) throw signUpError;
+        
+        if (data.user) {
+          // Upsert profile for new user
           const { error: profileError } = await supabase.from("profiles").upsert(
             {
-              id: signUpData.user.id,
-              email: signUpData.user.email ?? trimmedEmail ?? null,
+              id: data.user.id,
+              email: data.user.email ?? trimmedEmail ?? null,
               full_name: fullName || trimmedFirstName,
               college_name: trimmedCollegeName,
             },
             { onConflict: "id" },
           );
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-
+          if (profileError) console.error("Profile creation error:", profileError);
           window.sessionStorage.setItem("nexora-show-campus-onboarding", "1");
-          setPending(null);
-          setSignupSuccess(true);
-          setNotice("Account created successfully! Redirecting to login...");
-
-          setTimeout(() => {
-            void navigate({ to: AUTH_ROUTES.login, replace: true });
-          }, 1800);
         }
-      } catch (signupError) {
-        setError(getFriendlyErrorMessage(signupError));
-        console.error("Signup failed:", signupError);
-        setPending(null);
+        setSignupSuccess(true);
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: password,
+        });
+
+        if (signInError) throw signInError;
       }
-      return;
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setPending(null);
     }
-  };
-
-  const handleResetPassword = async () => {
-    setError(null);
-    setNotice("");
-
-    if (!trimmedEmail) {
-      setError("Please enter your email address first, then click Forgot Password.");
-      return;
-    }
-
-    setPending("reset");
-    const { error: resetError } = await resetPassword(trimmedEmail);
-    setPending(null);
-
-    if (resetError) {
-      setError(getFriendlyErrorMessage(resetError));
-      return;
-    }
-
-    setNotice("Password reset link has been dispatched to your email!");
   };
 
   return (
@@ -470,257 +421,211 @@ export function AuthExperience({ mode }: { mode: AuthMode }) {
         ) : (
           <>
             {/* Auth Form */}
-            <form onSubmit={(event) => void handlePasswordAuth(event)} className="space-y-3">
-              {isSignup ? (
-                <>
-                  {/* First Name & Surname */}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <ModernInput
-                      label="First Name *"
-                      icon={<User className="h-3.5 w-3.5" />}
-                      value={firstName}
-                      autoComplete="given-name"
-                      placeholder="Aisha"
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                    <ModernInput
-                      label="Last Name"
-                      icon={<User className="h-3.5 w-3.5" />}
-                      value={surname}
-                      autoComplete="family-name"
-                      placeholder="Rao"
-                      onChange={(e) => setSurname(e.target.value)}
-                    />
-                  </div>
+                <form onSubmit={(event) => void handleAuthSubmit(event)} className="space-y-3">
+                  {isSignup ? (
+                    <>
+                      {/* First Name & Surname */}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <ModernInput
+                          label="First Name *"
+                          icon={<User className="h-3.5 w-3.5" />}
+                          value={firstName}
+                          autoComplete="given-name"
+                          placeholder="Aisha"
+                          onChange={(e) => setFirstName(e.target.value)}
+                        />
+                        <ModernInput
+                          label="Last Name"
+                          icon={<User className="h-3.5 w-3.5" />}
+                          value={surname}
+                          autoComplete="family-name"
+                          placeholder="Rao"
+                          onChange={(e) => setSurname(e.target.value)}
+                        />
+                      </div>
 
-                  {/* College Email */}
-                  <ModernInput
-                    label="College Email *"
-                    icon={<Mail className="h-3.5 w-3.5" />}
-                    type="email"
-                    value={email}
-                    autoComplete="email"
-                    placeholder="student@university.edu"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                      {/* College Email */}
+                      <ModernInput
+                        label="College Email *"
+                        icon={<Mail className="h-3.5 w-3.5" />}
+                        type="email"
+                        value={email}
+                        autoComplete="email"
+                        placeholder="student@university.edu"
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
 
-                  {/* College Name */}
-                  <ModernInput
-                    label="College / University *"
-                    icon={<School className="h-3.5 w-3.5" />}
-                    value={collegeName}
-                    autoComplete="organization"
-                    placeholder="e.g. Stanford / IIT Delhi / NIT"
-                    onChange={(e) => setCollegeName(e.target.value)}
-                  />
+                      {/* College Name */}
+                      <ModernInput
+                        label="College / University *"
+                        icon={<School className="h-3.5 w-3.5" />}
+                        value={collegeName}
+                        autoComplete="organization"
+                        placeholder="e.g. Stanford / IIT Delhi / NIT"
+                        onChange={(e) => setCollegeName(e.target.value)}
+                      />
 
-                  {/* Passwords */}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <ModernInput
-                      label="Password *"
-                      icon={<Lock className="h-3.5 w-3.5" />}
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      onChange={(e) => setPassword(e.target.value)}
-                      action={
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="text-slate-400 hover:text-slate-200"
-                        >
-                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </button>
-                      }
-                    />
-                    <ModernInput
-                      label="Confirm *"
-                      icon={<ShieldCheck className="h-3.5 w-3.5" />}
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      action={
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          className="text-slate-400 hover:text-slate-200"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-3.5 w-3.5" />
-                          ) : (
-                            <Eye className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      }
-                    />
-                  </div>
-
-                  {/* Live Password Indicator */}
-                  {password && (
-                    <div className="rounded-lg bg-slate-900/60 p-2 text-[0.68rem]">
-                      <div className="mb-1 flex items-center justify-between text-slate-300 font-semibold">
-                        <span>Password Strength</span>
-                        <span
-                          className={
-                            passwordScore >= 4
-                              ? "text-emerald-400"
-                              : passwordScore >= 2
-                                ? "text-amber-400"
-                                : "text-rose-400"
+                      {/* Password & Confirm */}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <ModernInput
+                          label="Password *"
+                          icon={<Lock className="h-3.5 w-3.5" />}
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          autoComplete="new-password"
+                          placeholder="••••••••"
+                          onChange={(e) => setPassword(e.target.value)}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="p-1 text-slate-400 hover:text-white"
+                            >
+                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </button>
                           }
-                        >
-                          {passwordScore >= 4 ? "Strong" : passwordScore >= 2 ? "Moderate" : "Weak"}
+                        />
+                        <ModernInput
+                          label="Confirm *"
+                          icon={<ShieldCheck className="h-3.5 w-3.5" />}
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          autoComplete="new-password"
+                          placeholder="••••••••"
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="p-1 text-slate-400 hover:text-white"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </button>
+                          }
+                        />
+                      </div>
+
+                      {/* Terms & Conditions Check */}
+                      <label className="flex cursor-pointer items-start gap-2 pt-1 text-[0.72rem] text-slate-400">
+                        <input
+                          type="checkbox"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="mt-0.5 h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0 focus:ring-offset-0"
+                        />
+                        <span className="leading-snug">
+                          I agree to the{" "}
+                          <button
+                            type="button"
+                            onClick={() => setPolicyModal("terms")}
+                            className="font-bold text-indigo-400 hover:underline"
+                          >
+                            Terms
+                          </button>{" "}
+                          and{" "}
+                          <button
+                            type="button"
+                            onClick={() => setPolicyModal("privacy")}
+                            className="font-bold text-indigo-400 hover:underline"
+                          >
+                            Privacy Policy
+                          </button>
                         </span>
+                      </label>
+                    </>
+                  ) : (
+                    <>
+                      {/* Sign In Fields */}
+                      <ModernInput
+                        label="College Email"
+                        icon={<Mail className="h-3.5 w-3.5" />}
+                        type="email"
+                        value={email}
+                        autoComplete="email"
+                        placeholder="student@university.edu"
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[0.7rem] font-semibold text-slate-300">
+                            Password
+                          </label>
+                          <button
+                            type="button"
+                            className="text-[0.7rem] font-bold text-indigo-400 hover:text-indigo-300"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                        <ModernInput
+                          icon={<Lock className="h-3.5 w-3.5" />}
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          autoComplete="current-password"
+                          placeholder="Enter your password"
+                          onChange={(e) => setPassword(e.target.value)}
+                          action={
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="p-1 text-slate-400 hover:text-white"
+                            >
+                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </button>
+                          }
+                        />
                       </div>
-                      <div className="grid grid-cols-4 gap-1 h-1.5">
-                        <div
-                          className={`rounded-full transition-colors ${
-                            passwordScore >= 1 ? "bg-rose-500" : "bg-slate-700"
-                          }`}
-                        />
-                        <div
-                          className={`rounded-full transition-colors ${
-                            passwordScore >= 2 ? "bg-amber-500" : "bg-slate-700"
-                          }`}
-                        />
-                        <div
-                          className={`rounded-full transition-colors ${
-                            passwordScore >= 3 ? "bg-blue-500" : "bg-slate-700"
-                          }`}
-                        />
-                        <div
-                          className={`rounded-full transition-colors ${
-                            passwordScore >= 4 ? "bg-emerald-500" : "bg-slate-700"
-                          }`}
-                        />
-                      </div>
-                    </div>
+                    </>
                   )}
 
-                  {/* Terms & Conditions Check */}
-                  <label className="flex cursor-pointer items-start gap-2 pt-1 text-[0.72rem] text-slate-400">
-                    <input
-                      type="checkbox"
-                      checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0 focus:ring-offset-0"
-                    />
-                    <span className="leading-snug">
-                      I agree to the{" "}
-                      <button
-                        type="button"
-                        onClick={() => setPolicyModal("terms")}
-                        className="font-bold text-indigo-400 hover:underline"
-                      >
-                        Terms
-                      </button>{" "}
-                      and{" "}
-                      <button
-                        type="button"
-                        onClick={() => setPolicyModal("privacy")}
-                        className="font-bold text-indigo-400 hover:underline"
-                      >
-                        Privacy Policy
-                      </button>
-                    </span>
-                  </label>
-                </>
-              ) : (
-                <>
-                  {/* Sign In Fields */}
-                  <ModernInput
-                    label="College Email"
-                    icon={<Mail className="h-3.5 w-3.5" />}
-                    type="email"
-                    value={email}
-                    autoComplete="email"
-                    placeholder="student@university.edu"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={pending !== null || !signupFormValid}
+                    className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition-all duration-200 hover:bg-indigo-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                  >
+                    {pending === "email" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-white" />
+                        <span>{isSignup ? "Signing up..." : "Signing in..."}</span>
+                      </>
+                    ) : (
+                      <span>{isSignup ? "Sign Up" : "Sign In"}</span>
+                    )}
+                  </button>
+                </form>
 
-                  <div>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-[0.72rem] font-semibold text-slate-300">Password</span>
-                      <button
-                        type="button"
-                        onClick={() => void handleResetPassword()}
-                        disabled={pending !== null}
-                        className="text-[0.72rem] font-bold text-indigo-400 hover:text-indigo-300 hover:underline disabled:opacity-50"
-                      >
-                        Forgot Password?
-                      </button>
-                    </div>
-                    <ModernInput
-                      icon={<Lock className="h-3.5 w-3.5" />}
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      autoComplete="current-password"
-                      placeholder="Enter your password"
-                      onChange={(e) => setPassword(e.target.value)}
-                      action={
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="text-slate-400 hover:text-slate-200"
-                        >
-                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </button>
-                      }
-                    />
-                  </div>
-                </>
-              )}
+                {/* Divider */}
+                <div className="my-3.5 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/[0.08]" />
+                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Or continue with</span>
+                  <div className="h-px flex-1 bg-white/[0.08]" />
+                </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={pending !== null || !signupFormValid}
-                className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition-all duration-200 hover:bg-indigo-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
-              >
-                {pending === "email" ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    <span>{isSignup ? "Creating account..." : "Signing in..."}</span>
-                  </>
-                ) : (
-                  <span>{isSignup ? "Sign Up" : "Sign In"}</span>
-                )}
-              </button>
-            </form>
+                {/* Social Logins */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleGoogleAuth()}
+                    disabled={pending !== null}
+                    className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-slate-200 shadow-sm transition-all duration-200 hover:border-white/25 hover:bg-slate-800/90 hover:text-white active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <GoogleIcon className="h-4 w-4" />
+                    <span>{pending === "google" ? "Connecting..." : "Google"}</span>
+                  </button>
 
-            {/* Divider */}
-            <div className="my-3.5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/[0.08]" />
-              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Or continue with</span>
-              <div className="h-px flex-1 bg-white/[0.08]" />
-            </div>
-
-            {/* Social Logins */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => void handleGoogleAuth()}
-                disabled={pending !== null}
-                className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-slate-200 shadow-sm transition-all duration-200 hover:border-white/25 hover:bg-slate-800/90 hover:text-white active:scale-[0.98] disabled:opacity-50"
-              >
-                <GoogleIcon className="h-4 w-4" />
-                <span>{pending === "google" ? "Connecting..." : "Google"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void handleGitHubAuth()}
-                disabled={pending !== null}
-                className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-slate-200 shadow-sm transition-all duration-200 hover:border-white/25 hover:bg-slate-800/90 hover:text-white active:scale-[0.98] disabled:opacity-50"
-              >
-                <GitHubIcon className="h-4 w-4" />
-                <span>{pending === "github" ? "Connecting..." : "GitHub"}</span>
-              </button>
-            </div>
-          </>
+                  <button
+                    type="button"
+                    onClick={() => void handleGitHubAuth()}
+                    disabled={pending !== null}
+                    className="inline-flex min-h-[38px] items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-slate-200 shadow-sm transition-all duration-200 hover:border-white/25 hover:bg-slate-800/90 hover:text-white active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <GitHubIcon className="h-4 w-4" />
+                    <span>{pending === "github" ? "Connecting..." : "GitHub"}</span>
+                  </button>
+                </div>
+              </>
         )}
 
         {/* Footer Micro-Copy */}

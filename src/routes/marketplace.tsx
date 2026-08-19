@@ -696,19 +696,23 @@ function MarketplaceRoute() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  onClick={() => { setBuyerView("orders"); setProfileSellerId(null); setActiveView("browse"); }}
-                  className="cursor-pointer flex items-center gap-2"
-                >
-                  <ShoppingBag className="h-4 w-4" /> My Orders
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem
-                  onClick={() => { setBuyerView("messages"); setActiveView("chats"); setProfileSellerId(null); }}
-                  className="cursor-pointer flex items-center gap-2"
-                >
-                  <MessageSquare className="h-4 w-4" /> Buying Chats
-                </DropdownMenuItem>
+                {mode === "buying" && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => { setBuyerView("orders"); setProfileSellerId(null); setActiveView("browse"); }}
+                      className="cursor-pointer flex items-center gap-2"
+                    >
+                      <ShoppingBag className="h-4 w-4" /> My Orders
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem
+                      onClick={() => { setBuyerView("messages"); setActiveView("chats"); setProfileSellerId(null); }}
+                      className="cursor-pointer flex items-center gap-2"
+                    >
+                      <MessageSquare className="h-4 w-4" /> Buying Chats
+                    </DropdownMenuItem>
+                  </>
+                )}
                 
                 <DropdownMenuItem
                   onClick={() => { navigate({ to: "/marketplace/help" }); }}

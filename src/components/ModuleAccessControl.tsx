@@ -134,7 +134,6 @@ export function ModuleAccessModal({
   const navigate = useNavigate();
 
   const handleGoToSettings = () => {
-    window.sessionStorage.setItem("nexora-settings-section", "spaces");
     onClose();
     void navigate({ to: AUTH_ROUTES.settings });
   };

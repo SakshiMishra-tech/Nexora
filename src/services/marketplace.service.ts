@@ -534,8 +534,10 @@ export async function getMarketplaceItems(
     }
     if (filters) {
       if (filters.query) {
-        const term = `%${filters.query}%`;
-        // Only include category in text search if the column exists
+        // Wrap term in double quotes to prevent Supabase .or() parser from breaking on spaces/commas
+        const term = `"%${filters.query}%"`;
+        // We do a basic title/description/category search. 
+        // Note: searching seller name via foreign table in .or() is not supported without a view.
         q = hasCategoryTextColumn
           ? q.or(`title.ilike.${term},description.ilike.${term},category.ilike.${term}`)
           : q.or(`title.ilike.${term},description.ilike.${term}`);

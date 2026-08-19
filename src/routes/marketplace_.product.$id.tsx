@@ -31,7 +31,7 @@ export const Route = createFileRoute("/marketplace_/product/$id")({
 function ProductDetailPage() {
   const navigate = useNavigate();
   const { id } = Route.useParams();
-  const { selectedListing: listing, isDetailLoading: isLoading, savedItems, toggleSaveItem, listings } = useMarketplace({ id });
+  const { selectedListing: listing, isDetailLoading: isLoading, savedItems, toggleSaveItem, listings, goBack } = useMarketplace({ id });
   
   const [activeImage, setActiveImage] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -99,9 +99,9 @@ function ProductDetailPage() {
       {/* ── TOPBAR ─────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 bg-background/95 backdrop-blur-md border-b border-border/50">
         <div className="flex items-center gap-4">
-          <Link to="/marketplace" className="h-10 w-10 rounded-full flex items-center justify-center bg-secondary/50 hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+          <button onClick={goBack} className="h-10 w-10 rounded-full flex items-center justify-center bg-secondary/50 hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
             <ChevronLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div className="hidden sm:block">
             <NexoraLogo size="sm" />
           </div>
