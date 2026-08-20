@@ -46,6 +46,7 @@ import {
 } from "@/services/chat.service";
 import { getMarketplaceItem } from "@/services/marketplace.service";
 import { type MarketplaceListing, seedListings } from "@/lib/marketplace";
+import { getLostFoundItem } from "@/services/lost-found.service";
 
 export const Route = createFileRoute("/marketplace_/chat/$id")({
   head: () => ({ meta: [{ title: "Nexora — Chat" }] }),
@@ -60,6 +61,34 @@ const EMOJI_SET = [
 ];
 
 // ── Main Component ────────────────────────────────────────────
+function mapLostFoundItemToListing(
+  productId: string,
+  item: NonNullable<Awaited<ReturnType<typeof getLostFoundItem>>>,
+): MarketplaceListing {
+  return {
+    id: productId,
+    sellerId: item.user_id,
+    sellerName: item.poster_name,
+    sellerAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.poster_name)}&background=2563eb&color=fff`,
+    sellerCourse: "Lost & Found",
+    sellerRating: 0,
+    title: item.item_name,
+    description: item.description,
+    category: "Others",
+    condition: item.type === "lost" ? "Used" : "Good",
+    price: 0,
+    pickupArea: item.location,
+    images: item.image_url ? [item.image_url] : [],
+    status: "active",
+    tags: ["Lost & Found", item.type],
+    createdAt: item.created_at,
+    views: 0,
+    saves: 0,
+    offerCount: 0,
+    campus: item.campus,
+  };
+}
+
 function MarketplaceChatPage() {
   const { id: listingId } = Route.useParams();
   const navigate = useNavigate();
@@ -112,6 +141,18 @@ function MarketplaceChatPage() {
   // ── Load listing ───────────────────────────────────────────
   useEffect(() => {
     if (!listingId) return;
+
+    if (listingId.startsWith("lost-found:")) {
+      const lostFoundId = listingId.replace("lost-found:", "");
+      getLostFoundItem(lostFoundId)
+        .then((item) => {
+          if (item) setListing(mapLostFoundItemToListing(listingId, item));
+          else setLoadingState("error");
+        })
+        .catch(() => setLoadingState("error"));
+      return;
+    }
+
     getMarketplaceItem(listingId)
       .then((item) => {
         if (item) setListing(item);
@@ -362,6 +403,8 @@ function MarketplaceChatPage() {
 
   // ── Message groups ────────────────────────────────────────
   const messageGroups = groupMessagesByDate(messages);
+  const isLostFoundListing = listing?.id.startsWith("lost-found:") ?? false;
+  const lostFoundItemId = isLostFoundListing ? listing?.id.replace("lost-found:", "") : "";
 
   // ── Loading / Error screens ───────────────────────────────
   if (loadingState === "loading") {
@@ -445,7 +488,7 @@ function MarketplaceChatPage() {
         {/* Right: listing info + menu */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Compact product pill */}
-          {listing && (
+          {listing && !isLostFoundListing && (
             <Link
               to="/marketplace/product/$id"
               params={{ id: listing.id }}
@@ -460,6 +503,25 @@ function MarketplaceChatPage() {
                 <p className="text-xs font-semibold truncate text-foreground/90">{listing.title}</p>
                 <p className="text-[11px] font-bold text-emerald-400">
                   ₹{listing.price.toLocaleString("en-IN")}
+                </p>
+              </div>
+              <ExternalLink className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+            </Link>
+          )}
+          {listing && isLostFoundListing && (
+            <Link
+              to="/lost-found"
+              className="hidden sm:flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 hover:bg-white/[0.08] transition-colors"
+            >
+              <img
+                src={listing.images[0] || ""}
+                alt={listing.title}
+                className="h-7 w-7 rounded-lg object-cover bg-white/10"
+              />
+              <div className="min-w-0 max-w-[140px]">
+                <p className="text-xs font-semibold truncate text-foreground/90">{listing.title}</p>
+                <p className="text-[11px] font-bold text-blue-400">
+                  Lost & Found
                 </p>
               </div>
               <ExternalLink className="h-3 w-3 text-muted-foreground/60 shrink-0" />

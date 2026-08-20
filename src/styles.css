@@ -2937,5 +2937,52 @@
     appearance: auto;
     cursor: pointer;
   }
-}
 
+  .lf-input {
+    width: 100%;
+    min-height: 2.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background: rgb(255 255 255 / 0.04);
+    padding: 0.625rem 0.75rem;
+    color: rgb(248 250 252);
+    font-size: 0.875rem;
+    font-weight: 650;
+    outline: none;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+
+  .lf-input:focus {
+    border-color: rgb(96 165 250 / 0.75);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.18);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .lf-input::placeholder {
+    color: rgb(100 116 139);
+  }
+
+  select.lf-input option {
+    background: #111827;
+    color: rgb(248 250 252);
+  }
+
+  .lf-card-action {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 900;
+    transition: background 150ms ease, opacity 150ms ease;
+  }
+
+  .lf-card-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}

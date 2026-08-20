@@ -30,7 +30,6 @@ import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/
 import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
 import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
 import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
-import { Route as LostFoundIdRouteImport } from './routes/lost-found_.$id'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -143,11 +142,6 @@ const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
   path: '/backup',
   getParentRoute: () => MarketplaceRoute,
 } as any)
-const LostFoundIdRoute = LostFoundIdRouteImport.update({
-  id: '/lost-found_/$id',
-  path: '/lost-found/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -200,7 +194,6 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/lost-found/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -230,7 +223,6 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/lost-found/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -261,7 +253,6 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/lost-found_/$id': typeof LostFoundIdRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace_/help': typeof MarketplaceHelpRoute
   '/marketplace_/settings': typeof MarketplaceSettingsRoute
@@ -293,7 +284,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
-    | '/lost-found/$id'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -323,7 +313,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
-    | '/lost-found/$id'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -353,7 +342,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
-    | '/lost-found_/$id'
     | '/marketplace/backup'
     | '/marketplace_/help'
     | '/marketplace_/settings'
@@ -381,7 +369,6 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   TuitionRoute: typeof TuitionRoute
-  LostFoundIdRoute: typeof LostFoundIdRoute
   MarketplaceHelpRoute: typeof MarketplaceHelpRoute
   MarketplaceSettingsRoute: typeof MarketplaceSettingsRoute
   OnboardingCampusSpacesRoute: typeof OnboardingCampusSpacesRoute
@@ -539,13 +526,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceBackupRouteImport
       parentRoute: typeof MarketplaceRoute
     }
-    '/lost-found_/$id': {
-      id: '/lost-found_/$id'
-      path: '/lost-found/$id'
-      fullPath: '/lost-found/$id'
-      preLoaderRoute: typeof LostFoundIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/signup'
@@ -635,7 +615,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   TuitionRoute: TuitionRoute,
-  LostFoundIdRoute: LostFoundIdRoute,
   MarketplaceHelpRoute: MarketplaceHelpRoute,
   MarketplaceSettingsRoute: MarketplaceSettingsRoute,
   OnboardingCampusSpacesRoute: OnboardingCampusSpacesRoute,

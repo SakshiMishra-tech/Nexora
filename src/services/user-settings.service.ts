@@ -67,7 +67,7 @@ export async function getUserSettings(
     return null;
   }
 
-  return data as UserSettingsRow | null;
+  return data as unknown as UserSettingsRow | null;
 }
 
 /**
