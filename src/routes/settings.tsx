@@ -23,6 +23,9 @@ import {
   CalendarDays,
   Clock,
   TriangleAlert,
+  PackageSearch,
+  Edit3,
+  CheckCircle2,
 } from "lucide-react";
 import { useEffect, useState, useCallback, useRef, type ChangeEvent } from "react";
 import { toast } from "sonner";
@@ -39,7 +42,7 @@ export const Route = createFileRoute("/settings")({
   component: SettingsRoute,
 });
 
-type NavSection = "profile" | "security" | "actions";
+type NavSection = "profile" | "security" | "lost-found" | "actions";
 
 interface NavItem {
   id: NavSection;
@@ -50,6 +53,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "profile", label: "Profile & Campus", icon: UserCircle },
   { id: "security", label: "Account & Security", icon: Shield },
+  { id: "lost-found", label: "Lost & Found", icon: PackageSearch },
   { id: "actions", label: "Account Actions", icon: TriangleAlert },
 ];
 
@@ -127,6 +131,7 @@ function SettingsPage() {
     fullName: "",
     username: "",
     phone: "",
+    whatsapp: "",
     bio: "",
     // Campus
     college: "",
@@ -198,6 +203,7 @@ function SettingsPage() {
         fullName: profile?.full_name || meta.full_name || "",
         username: meta.username || "",
         phone: (profile as any)?.phone || meta.phone || "",
+        whatsapp: (profile as any)?.whatsapp || meta.whatsapp || "",
         bio: meta.bio || "",
         college: collegeVal,
         campusName: meta.campus_name || "",
@@ -354,6 +360,8 @@ function SettingsPage() {
           email: user.email ?? null,
           full_name: profileForm.fullName.trim(),
           college_name: profileForm.college.trim(),
+          phone: profileForm.phone.trim() || null,
+          whatsapp: profileForm.whatsapp.trim() || null,
         },
         { onConflict: "id" }
       );
@@ -362,6 +370,7 @@ function SettingsPage() {
           full_name: profileForm.fullName.trim(),
           username: profileForm.username.trim(),
           phone: profileForm.phone.trim(),
+          whatsapp: profileForm.whatsapp.trim(),
           bio: profileForm.bio.trim(),
           college_name: profileForm.college.trim(),
           campus_name: profileForm.campusName.trim(),
@@ -819,6 +828,26 @@ function SettingsPage() {
                     />
                   </div>
                 </FieldSection>
+
+                {/* ── LOST & FOUND POSTS ── */}
+                <FieldSection title="Lost & Found Posts" icon={PackageSearch}>
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Manage your active and resolved lost/found posts. You can view, edit, or mark them as recovered.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link to="/lost-found" search={{ tab: "lost" }} className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90">
+                        <PackageSearch className="h-4 w-4" />
+                        My Lost Posts
+                      </Link>
+                      <Link to="/lost-found" search={{ tab: "found" }} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold text-foreground hover:bg-muted">
+                        <PackageSearch className="h-4 w-4" />
+                        My Found Posts
+                      </Link>
+                    </div>
+                  </div>
+                </FieldSection>
+
 
                 {/* ── CAMPUS INFORMATION ── */}
                 <FieldSection title="Campus Information" icon={GraduationCap}>
@@ -1298,7 +1327,63 @@ function SettingsPage() {
             )}
 
             {/* ══════════════════════════════════════════════════════ */}
-            {/*  SECTION 3 — ACCOUNT ACTIONS                          */}
+            {/*  SECTION 3 — LOST & FOUND                             */}
+            {/* ══════════════════════════════════════════════════════ */}
+            {displaySection === "lost-found" && (
+              <div className="space-y-8 max-w-2xl">
+                <div>
+                  <h1 className="text-2xl font-black text-foreground">Lost & Found</h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Manage your lost and found posts, drafts, and resolved items.
+                  </p>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Link to="/lost-found" search={{ tab: "lost" }} className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-5 hover:border-primary/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                      <PackageSearch className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">My Lost Posts</h3>
+                      <p className="text-xs text-muted-foreground">Items you have lost</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/lost-found" search={{ tab: "found" }} className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-5 hover:border-primary/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                      <PackageSearch className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">My Found Posts</h3>
+                      <p className="text-xs text-muted-foreground">Items you have found</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/lost-found" search={{ tab: "drafts" }} className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-5 hover:border-primary/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                      <Edit3 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Drafts</h3>
+                      <p className="text-xs text-muted-foreground">Continue editing posts</p>
+                    </div>
+                  </Link>
+                  
+                  <Link to="/lost-found" search={{ tab: "resolved" }} className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-5 hover:border-primary/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Resolved</h3>
+                      <p className="text-xs text-muted-foreground">Recovered or returned items</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════ */}
+            {/*  SECTION 4 — ACCOUNT ACTIONS                          */}
             {/* ══════════════════════════════════════════════════════ */}
             {displaySection === "actions" && (
               <div className="space-y-8 max-w-2xl">

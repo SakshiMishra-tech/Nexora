@@ -30,6 +30,7 @@ import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/
 import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
 import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
 import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
+import { Route as LostFoundSettingsRouteImport } from './routes/lost-found_.settings'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -142,6 +143,11 @@ const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
   path: '/backup',
   getParentRoute: () => MarketplaceRoute,
 } as any)
+const LostFoundSettingsRoute = LostFoundSettingsRouteImport.update({
+  id: '/lost-found_/settings',
+  path: '/lost-found/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found/settings': typeof LostFoundSettingsRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found/settings': typeof LostFoundSettingsRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/lost-found_/settings': typeof LostFoundSettingsRoute
   '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace_/help': typeof MarketplaceHelpRoute
   '/marketplace_/settings': typeof MarketplaceSettingsRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found/settings'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found/settings'
     | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/signup'
+    | '/lost-found_/settings'
     | '/marketplace/backup'
     | '/marketplace_/help'
     | '/marketplace_/settings'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   TuitionRoute: typeof TuitionRoute
+  LostFoundSettingsRoute: typeof LostFoundSettingsRoute
   MarketplaceHelpRoute: typeof MarketplaceHelpRoute
   MarketplaceSettingsRoute: typeof MarketplaceSettingsRoute
   OnboardingCampusSpacesRoute: typeof OnboardingCampusSpacesRoute
@@ -526,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceBackupRouteImport
       parentRoute: typeof MarketplaceRoute
     }
+    '/lost-found_/settings': {
+      id: '/lost-found_/settings'
+      path: '/lost-found/settings'
+      fullPath: '/lost-found/settings'
+      preLoaderRoute: typeof LostFoundSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/signup'
@@ -615,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   TuitionRoute: TuitionRoute,
+  LostFoundSettingsRoute: LostFoundSettingsRoute,
   MarketplaceHelpRoute: MarketplaceHelpRoute,
   MarketplaceSettingsRoute: MarketplaceSettingsRoute,
   OnboardingCampusSpacesRoute: OnboardingCampusSpacesRoute,
