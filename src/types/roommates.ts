@@ -46,7 +46,6 @@ export type RoommateListingRow = {
   gender: string | null;
   campus: string | null;
   current_address: string | null;
-  housing_type_pref: string | null;
   pets: string | null;
   working_professional: boolean;
   phone_number: string | null;

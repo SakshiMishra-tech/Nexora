@@ -63,7 +63,7 @@ export async function fetchListings(
 
   let query = supabase
     .from("roommate_listings")
-    .select(LISTING_COLUMNS + ", count:id.count()", { count: "exact" })
+    .select(LISTING_COLUMNS, { count: "exact" })
     .eq("is_listing_enabled", true)
     .eq("paused", false)
     .in("visibility", ["public", "campus_only"])

@@ -274,8 +274,9 @@ function RoommatesContent() {
 
       setListings(profiles);
       setTotalListings(result.total);
-    } catch (e) {
-      toast.error("Failed to load listings");
+    } catch (e: any) {
+      console.error("Detailed fetch error:", e);
+      toast.error(`Failed to load listings: ${e.message || "Database connection error"}`);
     } finally {
       setLoading(false);
     }
