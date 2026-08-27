@@ -53,8 +53,19 @@ import {
   type LostFoundType,
 } from "@/services/lost-found.service";
 
+type LostFoundSearch = {
+  view?: "all" | "mine" | "drafts" | "resolved" | "saved";
+  type?: "all" | "lost" | "found";
+};
+
 export const Route = createFileRoute("/lost-found")({
   head: () => ({ meta: [{ title: "Nexora - Lost & Found" }] }),
+  validateSearch: (search: Record<string, unknown>): LostFoundSearch => {
+    return {
+      view: search.view as LostFoundSearch["view"],
+      type: search.type as LostFoundSearch["type"],
+    };
+  },
   component: LostFoundRoute,
 });
 
@@ -131,17 +142,25 @@ function LostFoundRoute() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const searchTab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
-  const validTabs = ["lost", "found", "drafts", "resolved", "saved"];
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>(
-    validTabs.includes(searchTab || "") ? (searchTab as TypeFilter) : "all"
-  );
+  const search = Route.useSearch();
+  
+  const initialTypeFilter: TypeFilter = 
+    search.view === "drafts" ? "drafts" :
+    search.view === "resolved" ? "resolved" :
+    search.view === "saved" ? "saved" :
+    (search.type === "lost" || search.type === "found") ? search.type :
+    "all";
+    
+  const initialShowMine = search.view === "mine" || search.view === "drafts" || search.view === "resolved" || search.view === "saved";
+
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(initialTypeFilter);
+  const [showMine, setShowMine] = useState(initialShowMine);
+
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [campusFilter, setCampusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [sort, setSort] = useState<LostFoundSort>("recent");
 
-  const [showMine, setShowMine] = useState(validTabs.includes(searchTab || ""));
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
@@ -173,7 +192,7 @@ function LostFoundRoute() {
         const saved = localStorage.getItem(`nexora:lostfound:settings:${user.id}`);
         if (saved) {
           const prefs = JSON.parse(saved);
-          if (!searchTab) { // don't override URL param
+          if (!search.view && !search.type) { // don't override URL param
              if (prefs.feed_default_view && prefs.feed_default_view !== "all") {
                setTypeFilter(prefs.feed_default_view);
              }
@@ -187,7 +206,7 @@ function LostFoundRoute() {
       }
       setPrefsLoaded(true);
     }
-  }, [user, prefsLoaded, searchTab]);
+  }, [user, prefsLoaded, search.view, search.type]);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -606,230 +625,179 @@ function LostFoundRoute() {
 
         {/* ── NAVBAR ──────────────────────────────────────────────── */}
         <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div className="mx-auto flex max-w-screen-2xl h-14 w-full items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full items-center gap-3 px-4 sm:px-6 lg:px-8 py-2 min-h-[56px] flex-wrap sm:flex-nowrap">
+            
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto mb-2 sm:mb-0 justify-between sm:justify-start">
+              <div className="flex items-center gap-1 -ml-2">
+                {/* ← Back */}
+                <Link
+                  to="/"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                  aria-label="Back to dashboard"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Link>
 
-            {/* ← Back */}
-            <Link
-              to="/"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
-              aria-label="Back to dashboard"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-
-            {/* Logo + Nexora | Lost & Found */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Nexora dashboard">
-              <NexoraLogo size="sm" showWordmark={false} />
-              <span className="hidden sm:flex items-center gap-2 select-none">
-                <span className="font-display text-base font-black text-foreground">Nexora</span>
-                <span className="h-4 w-px bg-border" aria-hidden="true" />
-                <span className="font-display text-base font-semibold text-muted-foreground">Lost &amp; Found</span>
-              </span>
-            </Link>
-
-            {/* Spacer */}
-            <div className="flex-1" />
-
-            {/* Inline search input (expands when searchOpen) */}
-            {searchOpen && (
-              <div className="flex items-center gap-2 flex-1 max-w-xs animate-in fade-in slide-in-from-right-4 duration-200">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  <input
-                    ref={searchInputRef}
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search items..."
-                    className="h-9 w-full rounded-lg border border-border bg-muted/50 pl-8 pr-3 text-sm font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:bg-background transition-colors"
-                  />
-                  {searchInput && (
-                    <button
-                      onClick={() => setSearchInput("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
+                {/* Logo + Title */}
+                <Link to="/" className="flex items-center gap-2.5" aria-label="Nexora dashboard">
+                  <NexoraLogo size="sm" showWordmark={false} />
+                  <span className="hidden lg:flex items-center gap-2 select-none">
+                    <span className="font-display text-base font-black text-foreground">Nexora</span>
+                    <span className="h-4 w-px bg-border" aria-hidden="true" />
+                    <span className="font-display text-base font-semibold text-muted-foreground">Lost &amp; Found</span>
+                  </span>
+                </Link>
               </div>
+
+              {/* Mobile Profile & Post Button (only visible on mobile, right aligned) */}
+              <div className="flex sm:hidden items-center gap-1 shrink-0">
+                <button
+                  onClick={openPost}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setProfileOpen((v) => !v)}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                    showMine || profileOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {profile?.full_name ? <span className="text-xs font-black">{profile.full_name.charAt(0).toUpperCase()}</span> : <User className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Context Back Button (Public Feed) */}
+            {showMine && (
+              <button
+                onClick={() => { 
+                  setShowMine(false); 
+                  setTypeFilter("all"); 
+                  navigate({ to: "/lost-found", search: { view: "all" } }); 
+                }}
+                className="hidden sm:flex items-center gap-1.5 shrink-0 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors ml-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Feed
+              </button>
             )}
 
-            {/* Right controls */}
-            <div className="flex items-center gap-1">
-              {/* LOST / FOUND tabs */}
-              <button
-                onClick={() => handleFilterTab("lost")}
-                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-colors ${
-                  typeFilter === "lost" && !showMine
-                    ? "bg-rose-500/15 text-rose-500"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                Lost
-              </button>
-              <button
-                onClick={() => handleFilterTab("found")}
-                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-colors ${
-                  typeFilter === "found" && !showMine
-                    ? "bg-emerald-500/15 text-emerald-600"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                Found
-              </button>
+            {currentMineLabel && (
+              <span className="hidden md:block shrink-0 text-xs font-black uppercase tracking-wider text-foreground whitespace-nowrap ml-1">
+                {currentMineLabel}
+              </span>
+            )}
 
-              <div className="h-4 w-px bg-border mx-1" aria-hidden="true" />
+            {/* Spacer */}
+            <div className="hidden sm:block flex-1" />
 
-              {/* + Post */}
-              <button
-                onClick={openPost}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-                aria-label="Post item"
+            {/* SEARCH / FILTERS */}
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-md flex-1 order-3 sm:order-none relative">
+              <div className="relative flex-1 min-w-[120px]">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search..."
+                  className="h-8 w-full rounded-lg border border-border bg-muted/50 pl-8 pr-3 text-xs font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:bg-background transition-colors"
+                />
+                {searchInput && (
+                  <button onClick={() => setSearchInput("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setFilterOpen((v) => !v)}
+                  className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors shrink-0 ${
+                    activeFilterCount > 0 || filterOpen
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Filter</span> {activeFilterCount > 0 && `• ${activeFilterCount}`}
+                </button>
+
+                {filterOpen && (
+                  <div ref={filterMenuRef} className="absolute right-0 top-10 z-50 w-64 rounded-xl border border-border bg-card p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Category</label>
+                        <select value={tempCategory} onChange={(e) => setTempCategory(e.target.value)} className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 cursor-pointer">
+                          <option value="all">All Categories</option>
+                          {LOST_FOUND_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Campus</label>
+                        <select value={tempCampus} onChange={(e) => setTempCampus(e.target.value)} className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 cursor-pointer">
+                          <option value="all">All Campuses</option>
+                          {LOST_FOUND_CAMPUSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Date</label>
+                        <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1" />
+                      </div>
+                      <div className="pt-2 flex items-center gap-2">
+                        <button onClick={clearFilters} className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-colors">Clear</button>
+                        <button onClick={applyFilters} className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity">Apply</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as LostFoundSort)}
+                className="h-8 rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer shrink-0 max-w-[100px] sm:max-w-none"
               >
-                <Plus className="h-5 w-5" />
-              </button>
+                <option value="recent">Recent</option>
+                <option value="oldest">Oldest</option>
+              </select>
+            </div>
 
-              {/* Search toggle */}
-              <button
-                onClick={() => setSearchOpen((v) => !v)}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-                  searchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                }`}
-                aria-label={searchOpen ? "Close search" : "Open search"}
-                aria-expanded={searchOpen}
-              >
-                {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-              </button>
-
-              {/* Profile menu */}
+            {/* Desktop Right Controls */}
+            <div className="hidden sm:flex items-center gap-1 shrink-0 ml-2">
+              <button onClick={() => { handleFilterTab("lost"); navigate({ to: "/lost-found", search: { view: "all", type: "lost" }}); }} className={`px-2.5 py-1.5 text-[11px] font-black uppercase rounded-lg transition-colors ${typeFilter === "lost" && !showMine ? "bg-rose-500/15 text-rose-500" : "text-muted-foreground hover:bg-muted"}`}>Lost</button>
+              <button onClick={() => { handleFilterTab("found"); navigate({ to: "/lost-found", search: { view: "all", type: "found" }}); }} className={`px-2.5 py-1.5 text-[11px] font-black uppercase rounded-lg transition-colors ${typeFilter === "found" && !showMine ? "bg-emerald-500/15 text-emerald-600" : "text-muted-foreground hover:bg-muted"}`}>Found</button>
+              
+              <div className="h-4 w-px bg-border mx-1" />
+              
+              <button onClick={openPost} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity"><Plus className="h-4 w-4" /></button>
+              
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setProfileOpen((v) => !v)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-                    showMine || profileOpen
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
-                  aria-label="Profile menu"
-                  aria-expanded={profileOpen}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${showMine || profileOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}
                 >
-                  {profile?.full_name ? (
-                    <span className="text-xs font-black">
-                      {profile.full_name.charAt(0).toUpperCase()}
-                    </span>
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-rose-500"></span>
-                  )}
+                  {profile?.full_name ? <span className="text-xs font-black">{profile.full_name.charAt(0).toUpperCase()}</span> : <User className="h-4 w-4" />}
+                  {unreadCount > 0 && <span className="absolute top-0 right-0 h-2 w-2 rounded-full border border-background bg-rose-500"></span>}
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                     {user ? (
                       <>
-                        {/* User info header */}
                         <div className="px-3 py-2 mb-1">
-                          <p className="text-xs font-black text-foreground truncate">
-                            {profile?.full_name || user.email?.split("@")[0] || "Student"}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                          <p className="text-xs font-black text-foreground truncate">{profile?.full_name || user.email?.split("@")[0] || "Student"}</p>
                         </div>
                         <div className="my-1 h-px bg-border" />
-
-                        {/* MY ACTIVITY */}
-                        <div className="px-3 pt-2 pb-1">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">My Activity</p>
-                        </div>
-                        <button
-                          onClick={() => handleProfileMenu("lost")}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors ${typeFilter === "lost" && showMine ? "text-rose-500 bg-rose-500/10" : "text-foreground"}`}
-                        >
-                          My Lost Posts
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("found")}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors ${typeFilter === "found" && showMine ? "text-emerald-600 bg-emerald-500/10" : "text-foreground"}`}
-                        >
-                          My Found Posts
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("drafts")}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors ${typeFilter === "drafts" && showMine ? "text-amber-500 bg-amber-500/10" : "text-foreground"}`}
-                        >
-                          Drafts
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("resolved")}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors ${typeFilter === "resolved" && showMine ? "text-muted-foreground bg-muted" : "text-foreground"}`}
-                        >
-                          Resolved
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("saved")}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors ${typeFilter === "saved" && showMine ? "text-primary bg-primary/10" : "text-foreground"}`}
-                        >
-                          Saved Posts
-                        </button>
-
-                        <div className="my-1 h-px bg-border" />
-
-                        {/* LOST & FOUND */}
-                        <div className="px-3 pt-1 pb-1">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Lost & Found</p>
-                        </div>
-                        <button
-                          onClick={() => handleProfileMenu("settings-lf")}
-                          className="flex w-full items-center px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors text-foreground"
-                        >
+                        <button onClick={() => { setProfileOpen(false); navigate({ to: "/lost-found/settings" }); }} className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors text-foreground">
                           Lost & Found Settings
+                          {unreadCount > 0 && <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">{unreadCount}</span>}
                         </button>
-                        <button
-                          onClick={() => handleProfileMenu("notifications-lf")}
-                          className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors text-foreground"
-                        >
-                          <span>Notifications</span>
-                          {unreadCount > 0 && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </button>
-
                         <div className="my-1 h-px bg-border" />
-
-                        {/* ACCOUNT */}
-                        <div className="px-3 pt-1 pb-1">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Account</p>
-                        </div>
-                        <button
-                          onClick={() => handleProfileMenu("account")}
-                          className="flex w-full items-center px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors text-foreground"
-                        >
-                          Account / Profile
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("settings")}
-                          className="flex w-full items-center px-3 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors text-foreground"
-                        >
-                          Main Settings
-                        </button>
-                        <button
-                          onClick={() => handleProfileMenu("logout")}
-                          className="flex w-full items-center px-3 py-2 text-sm font-semibold hover:bg-destructive/10 rounded-xl transition-colors text-destructive"
-                        >
-                          Log out
-                        </button>
+                        <button onClick={() => { setProfileOpen(false); signOut().then(() => navigate({ to: "/auth" })); }} className="flex w-full items-center px-3 py-2 text-sm font-semibold hover:bg-destructive/10 rounded-xl transition-colors text-destructive">Log out</button>
                       </>
                     ) : (
-                      <Link
-                        to="/auth"
-                        className="flex w-full items-center justify-center px-3 py-2 text-sm font-bold text-primary hover:bg-muted rounded-xl"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        Sign in
-                      </Link>
+                      <Link to="/auth" className="flex w-full items-center justify-center px-3 py-2 text-sm font-bold text-primary hover:bg-muted rounded-xl" onClick={() => setProfileOpen(false)}>Sign in</Link>
                     )}
                   </div>
                 )}
@@ -838,117 +806,8 @@ function LostFoundRoute() {
           </div>
         </header>
 
-        {/* ── FILTER ROW ──────────────────────────────────────────── */}
-        <div className="sticky top-14 z-30 border-b border-border bg-background/90 backdrop-blur">
-          <div className="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-2 sm:px-6 lg:px-8 overflow-x-auto">
-            {/* My posts back button */}
-            {showMine && (
-              <button
-                onClick={() => { setShowMine(false); setTypeFilter("all"); }}
-                className="flex items-center gap-1.5 shrink-0 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors mr-1"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Public Feed
-              </button>
-            )}
-
-            {/* Section label when in my-posts mode */}
-            {currentMineLabel && (
-              <span className="shrink-0 text-xs font-black uppercase tracking-wider text-foreground">
-                {currentMineLabel}
-              </span>
-            )}
-
-            <div className="flex items-center gap-2 ml-auto shrink-0 relative">
-              {/* Filter Popover Button */}
-              <button
-                onClick={() => setFilterOpen((v) => !v)}
-                className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors ${
-                  activeFilterCount > 0 || filterOpen
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                <Filter className="h-3.5 w-3.5" />
-                Filter {activeFilterCount > 0 && `• ${activeFilterCount}`}
-              </button>
-
-              {/* Filter Popover Menu */}
-              {filterOpen && (
-                <div
-                  ref={filterMenuRef}
-                  className="absolute right-0 top-10 z-50 w-64 rounded-xl border border-border bg-card p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150"
-                >
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Category</label>
-                      <select
-                        value={tempCategory}
-                        onChange={(e) => setTempCategory(e.target.value)}
-                        className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 cursor-pointer"
-                      >
-                        <option value="all">All Categories</option>
-                        {LOST_FOUND_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Campus</label>
-                      <select
-                        value={tempCampus}
-                        onChange={(e) => setTempCampus(e.target.value)}
-                        className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 cursor-pointer"
-                      >
-                        <option value="all">All Campuses</option>
-                        {LOST_FOUND_CAMPUSES.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Date</label>
-                      <input
-                        type="date"
-                        value={tempDate}
-                        onChange={(e) => setTempDate(e.target.value)}
-                        className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1"
-                      />
-                    </div>
-                    <div className="pt-2 flex items-center gap-2">
-                      <button
-                        onClick={clearFilters}
-                        className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-colors"
-                      >
-                        Clear
-                      </button>
-                      <button
-                        onClick={applyFilters}
-                        className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sort Dropdown */}
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as LostFoundSort)}
-                className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-                aria-label="Sort order"
-              >
-                <option value="recent">Most Recent</option>
-                <option value="oldest">Oldest First</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         {/* ── MAIN CONTENT ────────────────────────────────────────── */}
-        <main className="mx-auto w-full max-w-screen-2xl px-4 py-5 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full px-4 py-4 sm:px-6 lg:px-8">
 
           {/* Active search query indicator */}
           {query && (
