@@ -1240,6 +1240,9 @@ function ItemCard({
   onDelete,
   onEdit,
   onRecovered,
+  isSaved,
+  onToggleSave,
+  onReopen,
 }: {
   item: LostFoundItem;
   ownPost: boolean;

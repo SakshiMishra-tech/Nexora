@@ -133,23 +133,6 @@ export async function updateModuleEnabled(
     .select(SELECT_COLUMNS)
     .single();
 
-  if (import.meta.env.DEV) {
-    const debugQuery = query as unknown as {
-      url?: URL;
-      method?: string;
-      body?: unknown;
-    };
-
-    console.debug("updateModuleEnabled Supabase query:", {
-      method: debugQuery.method,
-      url: debugQuery.url?.toString(),
-      table: "user_settings",
-      operation: "update",
-      filters: { user_id: currentUser.id },
-    });
-    console.debug("updateModuleEnabled Supabase payload:", payload);
-  }
-
   const { data, error } = await query;
 
   if (error) {

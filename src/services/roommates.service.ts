@@ -31,7 +31,7 @@ const LISTING_COLUMNS = [
   "verification_status", "receive_requests", "receive_chats",
   "display_name", "avatar_url", "course", "college", "branch",
   "semester", "gender", "campus", "current_address",
-  "pets", "working_professional",
+  "pets", "preferred_age_min", "preferred_age_max",
   "recently_active_at", "created_at", "updated_at",
 ].join(", ");
 
@@ -63,7 +63,7 @@ export async function fetchListings(
 
   let query = supabase
     .from("roommate_listings")
-    .select(LISTING_COLUMNS, { count: "exact" })
+    .select(LISTING_COLUMNS)
     .eq("is_listing_enabled", true)
     .eq("paused", false)
     .in("visibility", ["public", "campus_only"])
@@ -75,25 +75,17 @@ export async function fetchListings(
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (filters.campus !== "Any") query = query.eq("campus", filters.campus);
-  if (filters.gender !== "Any") query = query.eq("gender", filters.gender);
-  if (filters.verifiedOnly) query = query.eq("verification_status", "verified");
-  if (filters.moveInBy) query = query.lte("move_in_date", filters.moveInBy);
-  if (filters.food !== "Any") query = query.eq("food", filters.food);
-  if (filters.smoking !== "Any") query = query.eq("smoking", filters.smoking);
-  if (filters.alcohol !== "Any") query = query.eq("alcohol", filters.alcohol);
-  if (filters.sleepSchedule !== "Any") query = query.eq("sleep_schedule", filters.sleepSchedule);
-  if (filters.cleanliness !== "Any") query = query.eq("cleanliness", filters.cleanliness);
-  if (filters.visitors !== "Any") query = query.eq("visitors", filters.visitors);
-  if (filters.studyStyle !== "Any") query = query.eq("study_style", filters.studyStyle);
-  if (filters.roomType !== "Any") query = query.eq("room_type", filters.roomType);
-  if (filters.housingType !== "Any") query = query.eq("housing_type", filters.housingType);
+  if (filters.housingType.length > 0) query = query.in("housing_type", filters.housingType);
+  if (filters.roomType.length > 0) query = query.in("room_type", filters.roomType);
+  if (filters.food.length > 0) query = query.in("food", filters.food);
+  if (filters.religionPreference.length > 0) query = query.in("religion_preference", filters.religionPreference);
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
   if (error) throw error;
 
   return {
     profiles: ((data as unknown as RoommateListingRow[]) ?? []).map(rowToProfile),
-    total: count ?? 0,
+    total: data ? data.length : 0,
   };
 }
 
@@ -573,13 +565,6 @@ export function sortProfiles(profiles: RoommateProfile[], mode: SortMode): Roomm
   }
 }
 
-/** Count active filters (differs from default) */
-export function countActiveFilters(filters: RoommateFilters): number {
-  const { defaultFilters } = require("@/types/roommates");
-  return Object.entries(filters).filter(
-    ([k, v]) => v !== (defaultFilters as Record<string, unknown>)[k],
-  ).length;
-}
 
 // ── Mappers ───────────────────────────────────────────────────
 
@@ -599,7 +584,6 @@ export function rowToProfile(row: RoommateListingRow): RoommateProfile {
     verified: row.verification_status === "verified",
     recentlyActiveAt: row.recently_active_at ?? null,
     createdAt: row.created_at ?? null,
-    workingProfessional: row.working_professional ?? false,
 
     budgetMin: row.budget_min,
     budgetMax: row.budget_max,
@@ -619,6 +603,8 @@ export function rowToProfile(row: RoommateListingRow): RoommateProfile {
     pets: row.pets ?? null,
 
     genderPreference: row.gender_preference ?? null,
+    preferredAgeMin: row.preferred_age_min ?? 18,
+    preferredAgeMax: row.preferred_age_max ?? 28,
     religionPreference: row.religion_preference ?? null,
     languages: row.languages ?? [],
     interests: row.interests ?? [],
@@ -631,6 +617,8 @@ export function rowToProfile(row: RoommateListingRow): RoommateProfile {
     receiveRequests: row.receive_requests,
     receiveChats: row.receive_chats,
     paused: row.paused,
+    
+    photoUrls: row.photo_urls ?? null,
   };
 }
 
@@ -650,7 +638,6 @@ function formToRow(form: RoommateProfileForm, userId: string) {
     languages: form.languages,
     about: form.about || null,
     avatar_url: form.avatarUrl || null,
-    working_professional: form.workingProfessional,
 
     budget_min: form.budgetMin,
     budget_max: form.budgetMax,
@@ -670,6 +657,8 @@ function formToRow(form: RoommateProfileForm, userId: string) {
     gender_preference: form.genderPreference || null,
     interests: form.interests,
     amenities: form.amenities,
+    preferred_age_min: form.preferredAgeMin,
+    preferred_age_max: form.preferredAgeMax,
     pets: form.pets || null,
     daily_routine: form.dailyRoutine || null,
     visibility: form.visibility,

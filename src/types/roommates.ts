@@ -31,6 +31,8 @@ export type RoommateListingRow = {
   languages: string[] | null;
   interests: string[] | null;
   amenities: string[] | null;
+  preferred_age_min: number | null;
+  preferred_age_max: number | null;
   age: number | null;
   daily_routine: string | null;
   photo_urls: string[] | null;
@@ -47,7 +49,6 @@ export type RoommateListingRow = {
   campus: string | null;
   current_address: string | null;
   pets: string | null;
-  working_professional: boolean;
   phone_number: string | null;
   instagram_handle: string | null;
   recently_active_at: string | null;
@@ -93,7 +94,6 @@ export type RoommateProfile = {
   verified: boolean;
   recentlyActiveAt: string | null;
   createdAt: string | null;
-  workingProfessional: boolean;
 
   // Room & Budget
   budgetMin: number;
@@ -116,6 +116,8 @@ export type RoommateProfile = {
 
   // Preferences
   genderPreference: string | null;
+  preferredAgeMin: number;
+  preferredAgeMax: number;
   religionPreference: string | null;
   languages: string[];
   interests: string[];
@@ -136,6 +138,8 @@ export type RoommateProfile = {
   instagramHandle?: string | null;
   currentAddress?: string | null;
 
+  photoUrls?: string[] | null;
+
   // Computed client-side
   compatibility?: CompatibilityResult | null;
 };
@@ -155,7 +159,6 @@ export type RoommateProfileForm = {
   languages: string[];
   about: string;
   avatarUrl: string;
-  workingProfessional: boolean;
 
   // Step 2 — Room & Budget
   budgetMin: number;
@@ -204,7 +207,6 @@ export const defaultProfileForm: RoommateProfileForm = {
   languages: ["English"],
   about: "",
   avatarUrl: "",
-  workingProfessional: false,
 
   budgetMin: 7000,
   budgetMax: 12000,
@@ -244,36 +246,20 @@ export type RoommateFilters = {
   campus: string;
   budgetMin: number;
   budgetMax: number;
-  gender: string;
-  moveInBy: string;
-  verifiedOnly: boolean;
-  food: string;
-  smoking: string;
-  alcohol: string;
-  sleepSchedule: string;
-  cleanliness: string;
-  visitors: string;
-  studyStyle: string;
-  roomType: string;
-  housingType: string;
+  housingType: string[];
+  roomType: string[];
+  food: string[];
+  religionPreference: string[];
 };
 
 export const defaultFilters: RoommateFilters = {
   campus: "Any",
   budgetMin: 3000,
   budgetMax: 30000,
-  gender: "Any",
-  moveInBy: "",
-  verifiedOnly: false,
-  food: "Any",
-  smoking: "Any",
-  alcohol: "Any",
-  sleepSchedule: "Any",
-  cleanliness: "Any",
-  visitors: "Any",
-  studyStyle: "Any",
-  roomType: "Any",
-  housingType: "Any",
+  housingType: [],
+  roomType: [],
+  food: [],
+  religionPreference: [],
 };
 
 // ── Sort Mode ─────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import type {
 import { supabase } from "@/lib/supabase";
 import { getAuthRedirectUrl, isProfileComplete } from "@/lib/auth";
 import type { CampusModuleId } from "@/lib/modules";
+import type { AccountState } from "@/services/account.service";
 
 export type UserProfile = {
   id: string;
@@ -19,10 +20,13 @@ export type UserProfile = {
   created_at?: string;
 };
 
+export type { AccountState };
+
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   profile: UserProfile | null;
+  accountState: AccountState | null;
   loading: boolean;
   profileLoading: boolean;
   profileChecked: boolean;
@@ -30,6 +34,7 @@ type AuthContextValue = {
   signInWithOAuth: (provider: Extract<Provider, "google" | "github">) => Promise<OAuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
   refreshProfile: () => Promise<UserProfile | null>;
+  refreshAccountState: () => Promise<AccountState | null>;
 };
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -37,6 +42,7 @@ export const AuthContext = createContext<AuthContextValue | undefined>(undefined
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [accountState, setAccountState] = useState<AccountState | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
@@ -49,32 +55,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, email, full_name, college_name, created_at")
+      .select(
+        "id, email, full_name, college_name, created_at, is_deactivated, deactivated_at, deletion_requested_at, scheduled_deletion_at",
+      )
       .eq("id", userId)
-      .maybeSingle<UserProfile>();
+      .maybeSingle<UserProfile & AccountState>();
 
     setProfileLoading(false);
     setProfileChecked(true);
 
-    if (!error) {
+    if (!error && data) {
       setProfile(data);
+      setAccountState({
+        is_deactivated: data.is_deactivated ?? false,
+        deactivated_at: data.deactivated_at ?? null,
+        deletion_requested_at: data.deletion_requested_at ?? null,
+        scheduled_deletion_at: data.scheduled_deletion_at ?? null,
+      });
       return data;
     }
 
-    console.error("Profile fetch failed:", error);
-    setProfile(null);
-    return null;
+    if (error) console.error("Profile fetch failed:", error);
+    setProfile(data ?? null);
+    setAccountState(null);
+    return data ?? null;
   }, []);
 
   const refreshProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
+      setAccountState(null);
       setProfileChecked(true);
       return null;
     }
 
     return fetchProfile(user.id);
   }, [fetchProfile, user]);
+
+  const refreshAccountState = useCallback(async () => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("is_deactivated, deactivated_at, deletion_requested_at, scheduled_deletion_at")
+      .eq("id", user.id)
+      .single();
+    if (error || !data) return null;
+    const state = data as AccountState;
+    setAccountState(state);
+    return state;
+  }, [user]);
 
   useEffect(() => {
     let mounted = true;
@@ -132,8 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-
-
   const signOut = useCallback(() => supabase.auth.signOut(), []);
 
   const value = useMemo<AuthContextValue>(
@@ -141,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user,
       profile,
+      accountState,
       loading,
       profileLoading,
       profileChecked,
@@ -148,12 +176,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithOAuth,
       signOut,
       refreshProfile,
+      refreshAccountState,
     }),
     [
+      accountState,
       loading,
       profile,
       profileChecked,
       profileLoading,
+      refreshAccountState,
       refreshProfile,
       session,
       signInWithOAuth,

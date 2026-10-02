@@ -855,7 +855,6 @@ export async function createMarketplaceItem(
 
   let row;
   try {
-    console.log("[marketplace] Supabase insert payload:\n", JSON.stringify(itemPayload, null, 2));
     row = await insertItem(itemPayload);
   } catch (err) {
     // Rollback storage if db insert fails

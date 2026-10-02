@@ -17,7 +17,6 @@ import { Route as RidesRouteImport } from './routes/rides'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NotesRouteImport } from './routes/notes'
-import { Route as MarketplacePremiumRouteImport } from './routes/marketplace-premium'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LostFoundRouteImport } from './routes/lost-found'
 import { Route as EventsRouteImport } from './routes/events'
@@ -29,7 +28,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/campus-spaces'
 import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
 import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
-import { Route as MarketplaceBackupRouteImport } from './routes/marketplace.backup'
 import { Route as LostFoundSettingsRouteImport } from './routes/lost-found_.settings'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -76,11 +74,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplacePremiumRoute = MarketplacePremiumRouteImport.update({
-  id: '/marketplace-premium',
-  path: '/marketplace-premium',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -138,11 +131,6 @@ const MarketplaceHelpRoute = MarketplaceHelpRouteImport.update({
   path: '/marketplace/help',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MarketplaceBackupRoute = MarketplaceBackupRouteImport.update({
-  id: '/backup',
-  path: '/backup',
-  getParentRoute: () => MarketplaceRoute,
-} as any)
 const LostFoundSettingsRoute = LostFoundSettingsRouteImport.update({
   id: '/lost-found_/settings',
   path: '/lost-found/settings',
@@ -187,8 +175,7 @@ export interface FileRoutesByFullPath {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRouteWithChildren
-  '/marketplace-premium': typeof MarketplacePremiumRoute
+  '/marketplace': typeof MarketplaceRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
@@ -201,7 +188,6 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/lost-found/settings': typeof LostFoundSettingsRoute
-  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
@@ -217,8 +203,7 @@ export interface FileRoutesByTo {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRouteWithChildren
-  '/marketplace-premium': typeof MarketplacePremiumRoute
+  '/marketplace': typeof MarketplaceRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
@@ -231,7 +216,6 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/lost-found/settings': typeof LostFoundSettingsRoute
-  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
@@ -248,8 +232,7 @@ export interface FileRoutesById {
   '/dating': typeof DatingRoute
   '/events': typeof EventsRoute
   '/lost-found': typeof LostFoundRoute
-  '/marketplace': typeof MarketplaceRouteWithChildren
-  '/marketplace-premium': typeof MarketplacePremiumRoute
+  '/marketplace': typeof MarketplaceRoute
   '/notes': typeof NotesRoute
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
@@ -262,7 +245,6 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/lost-found_/settings': typeof LostFoundSettingsRoute
-  '/marketplace/backup': typeof MarketplaceBackupRoute
   '/marketplace_/help': typeof MarketplaceHelpRoute
   '/marketplace_/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
@@ -281,7 +263,6 @@ export interface FileRouteTypes {
     | '/events'
     | '/lost-found'
     | '/marketplace'
-    | '/marketplace-premium'
     | '/notes'
     | '/privacy'
     | '/projects'
@@ -294,7 +275,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/lost-found/settings'
-    | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
     | '/onboarding/campus-spaces'
@@ -311,7 +291,6 @@ export interface FileRouteTypes {
     | '/events'
     | '/lost-found'
     | '/marketplace'
-    | '/marketplace-premium'
     | '/notes'
     | '/privacy'
     | '/projects'
@@ -324,7 +303,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/lost-found/settings'
-    | '/marketplace/backup'
     | '/marketplace/help'
     | '/marketplace/settings'
     | '/onboarding/campus-spaces'
@@ -341,7 +319,6 @@ export interface FileRouteTypes {
     | '/events'
     | '/lost-found'
     | '/marketplace'
-    | '/marketplace-premium'
     | '/notes'
     | '/privacy'
     | '/projects'
@@ -354,7 +331,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/lost-found_/settings'
-    | '/marketplace/backup'
     | '/marketplace_/help'
     | '/marketplace_/settings'
     | '/onboarding/campus-spaces'
@@ -371,8 +347,7 @@ export interface RootRouteChildren {
   DatingRoute: typeof DatingRoute
   EventsRoute: typeof EventsRoute
   LostFoundRoute: typeof LostFoundRoute
-  MarketplaceRoute: typeof MarketplaceRouteWithChildren
-  MarketplacePremiumRoute: typeof MarketplacePremiumRoute
+  MarketplaceRoute: typeof MarketplaceRoute
   NotesRoute: typeof NotesRoute
   PrivacyRoute: typeof PrivacyRoute
   ProjectsRoute: typeof ProjectsRoute
@@ -446,13 +421,6 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace-premium': {
-      id: '/marketplace-premium'
-      path: '/marketplace-premium'
-      fullPath: '/marketplace-premium'
-      preLoaderRoute: typeof MarketplacePremiumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -532,13 +500,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceHelpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace/backup': {
-      id: '/marketplace/backup'
-      path: '/backup'
-      fullPath: '/marketplace/backup'
-      preLoaderRoute: typeof MarketplaceBackupRouteImport
-      parentRoute: typeof MarketplaceRoute
-    }
     '/lost-found_/settings': {
       id: '/lost-found_/settings'
       path: '/lost-found/settings'
@@ -605,18 +566,6 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
-interface MarketplaceRouteChildren {
-  MarketplaceBackupRoute: typeof MarketplaceBackupRoute
-}
-
-const MarketplaceRouteChildren: MarketplaceRouteChildren = {
-  MarketplaceBackupRoute: MarketplaceBackupRoute,
-}
-
-const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
-  MarketplaceRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
@@ -625,8 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   DatingRoute: DatingRoute,
   EventsRoute: EventsRoute,
   LostFoundRoute: LostFoundRoute,
-  MarketplaceRoute: MarketplaceRouteWithChildren,
-  MarketplacePremiumRoute: MarketplacePremiumRoute,
+  MarketplaceRoute: MarketplaceRoute,
   NotesRoute: NotesRoute,
   PrivacyRoute: PrivacyRoute,
   ProjectsRoute: ProjectsRoute,

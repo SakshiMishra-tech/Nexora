@@ -199,8 +199,7 @@ export function useMarketplace(
         if (page === 1) setIsLoading(true);
         setError(null);
         
-        console.log("[marketplace] Fetch started", { activeView, page, filters: filters.category, trigger: fetchTrigger });
-        
+
         let result: { items: MarketplaceListing[], hasMore: boolean } = { items: [], hasMore: false };
 
         if (activeView === "saved") {
@@ -217,7 +216,7 @@ export function useMarketplace(
 
         if (!mounted) return;
 
-        console.log("[marketplace] Fetch success", { count: result.items.length, hasMore: result.hasMore });
+
 
         if (page === 1) {
           setListings(result.items);
