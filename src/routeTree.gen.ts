@@ -9,101 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TuitionRouteImport } from './routes/tuition'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RoommatesRouteImport } from './routes/roommates'
-import { Route as RidesRouteImport } from './routes/rides'
-import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as NotesRouteImport } from './routes/notes'
-import { Route as MarketplaceRouteImport } from './routes/marketplace'
-import { Route as LostFoundRouteImport } from './routes/lost-found'
-import { Route as EventsRouteImport } from './routes/events'
-import { Route as DatingRouteImport } from './routes/dating'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/campus-spaces'
-import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
-import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
-import { Route as LostFoundSettingsRouteImport } from './routes/lost-found_.settings'
-import { Route as AuthSignupRouteImport } from './routes/auth/signup'
-import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DatingRouteImport } from './routes/dating'
+import { Route as EventsRouteImport } from './routes/events'
+import { Route as LostFoundRouteImport } from './routes/lost-found'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as NotesRouteImport } from './routes/notes'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as RidesRouteImport } from './routes/rides'
+import { Route as RoommatesRouteImport } from './routes/roommates'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TuitionRouteImport } from './routes/tuition'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
-import { Route as MarketplaceSellerIdRouteImport } from './routes/marketplace_.seller.$id'
-import { Route as MarketplaceProductIdRouteImport } from './routes/marketplace_.product.$id'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthSignupRouteImport } from './routes/auth/signup'
+import { Route as LostFoundSettingsRouteImport } from './routes/lost-found_.settings'
+import { Route as MarketplaceHelpRouteImport } from './routes/marketplace_.help'
+import { Route as MarketplaceSettingsRouteImport } from './routes/marketplace_.settings'
+import { Route as OnboardingCampusSpacesRouteImport } from './routes/onboarding/campus-spaces'
+import { Route as ConnectSectionTopicRouteImport } from './routes/connect.$section.$topic'
 import { Route as MarketplaceChatIdRouteImport } from './routes/marketplace_.chat.$id'
+import { Route as MarketplaceProductIdRouteImport } from './routes/marketplace_.product.$id'
+import { Route as MarketplaceSellerIdRouteImport } from './routes/marketplace_.seller.$id'
 
-const TuitionRoute = TuitionRouteImport.update({
-  id: '/tuition',
-  path: '/tuition',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RoommatesRoute = RoommatesRouteImport.update({
-  id: '/roommates',
-  path: '/roommates',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RidesRoute = RidesRouteImport.update({
-  id: '/rides',
-  path: '/rides',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsRoute = ProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotesRoute = NotesRouteImport.update({
-  id: '/notes',
-  path: '/notes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceRoute = MarketplaceRouteImport.update({
-  id: '/marketplace',
-  path: '/marketplace',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LostFoundRoute = LostFoundRouteImport.update({
-  id: '/lost-found',
-  path: '/lost-found',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventsRoute = EventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DatingRoute = DatingRouteImport.update({
-  id: '/dating',
-  path: '/dating',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompleteProfileRoute = CompleteProfileRouteImport.update({
-  id: '/complete-profile',
-  path: '/complete-profile',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -111,34 +47,79 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CompleteProfileRoute = CompleteProfileRouteImport.update({
+  id: '/complete-profile',
+  path: '/complete-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingCampusSpacesRoute = OnboardingCampusSpacesRouteImport.update({
-  id: '/onboarding/campus-spaces',
-  path: '/onboarding/campus-spaces',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MarketplaceSettingsRoute = MarketplaceSettingsRouteImport.update({
-  id: '/marketplace_/settings',
-  path: '/marketplace/settings',
+const DatingRoute = DatingRouteImport.update({
+  id: '/dating',
+  path: '/dating',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MarketplaceHelpRoute = MarketplaceHelpRouteImport.update({
-  id: '/marketplace_/help',
-  path: '/marketplace/help',
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LostFoundSettingsRoute = LostFoundSettingsRouteImport.update({
-  id: '/lost-found_/settings',
-  path: '/lost-found/settings',
+const LostFoundRoute = LostFoundRouteImport.update({
+  id: '/lost-found',
+  path: '/lost-found',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RidesRoute = RidesRouteImport.update({
+  id: '/rides',
+  path: '/rides',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoommatesRoute = RoommatesRouteImport.update({
+  id: '/roommates',
+  path: '/roommates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TuitionRoute = TuitionRouteImport.update({
+  id: '/tuition',
+  path: '/tuition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -146,14 +127,39 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => AuthRoute,
 } as any)
-const MarketplaceSellerIdRoute = MarketplaceSellerIdRouteImport.update({
-  id: '/marketplace_/seller/$id',
-  path: '/marketplace/seller/$id',
+const LostFoundSettingsRoute = LostFoundSettingsRouteImport.update({
+  id: '/lost-found_/settings',
+  path: '/lost-found/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceHelpRoute = MarketplaceHelpRouteImport.update({
+  id: '/marketplace_/help',
+  path: '/marketplace/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceSettingsRoute = MarketplaceSettingsRouteImport.update({
+  id: '/marketplace_/settings',
+  path: '/marketplace/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingCampusSpacesRoute = OnboardingCampusSpacesRouteImport.update({
+  id: '/onboarding/campus-spaces',
+  path: '/onboarding/campus-spaces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectSectionTopicRoute = ConnectSectionTopicRouteImport.update({
+  id: '/connect/$section/$topic',
+  path: '/connect/$section/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceChatIdRoute = MarketplaceChatIdRouteImport.update({
+  id: '/marketplace_/chat/$id',
+  path: '/marketplace/chat/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceProductIdRoute = MarketplaceProductIdRouteImport.update({
@@ -161,9 +167,9 @@ const MarketplaceProductIdRoute = MarketplaceProductIdRouteImport.update({
   path: '/marketplace/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MarketplaceChatIdRoute = MarketplaceChatIdRouteImport.update({
-  id: '/marketplace_/chat/$id',
-  path: '/marketplace/chat/$id',
+const MarketplaceSellerIdRoute = MarketplaceSellerIdRouteImport.update({
+  id: '/marketplace_/seller/$id',
+  path: '/marketplace/seller/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/connect/$section/$topic': typeof ConnectSectionTopicRoute
   '/marketplace/chat/$id': typeof MarketplaceChatIdRoute
   '/marketplace/product/$id': typeof MarketplaceProductIdRoute
   '/marketplace/seller/$id': typeof MarketplaceSellerIdRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/marketplace/help': typeof MarketplaceHelpRoute
   '/marketplace/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/connect/$section/$topic': typeof ConnectSectionTopicRoute
   '/marketplace/chat/$id': typeof MarketplaceChatIdRoute
   '/marketplace/product/$id': typeof MarketplaceProductIdRoute
   '/marketplace/seller/$id': typeof MarketplaceSellerIdRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/marketplace_/help': typeof MarketplaceHelpRoute
   '/marketplace_/settings': typeof MarketplaceSettingsRoute
   '/onboarding/campus-spaces': typeof OnboardingCampusSpacesRoute
+  '/connect/$section/$topic': typeof ConnectSectionTopicRoute
   '/marketplace_/chat/$id': typeof MarketplaceChatIdRoute
   '/marketplace_/product/$id': typeof MarketplaceProductIdRoute
   '/marketplace_/seller/$id': typeof MarketplaceSellerIdRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/marketplace/help'
     | '/marketplace/settings'
     | '/onboarding/campus-spaces'
+    | '/connect/$section/$topic'
     | '/marketplace/chat/$id'
     | '/marketplace/product/$id'
     | '/marketplace/seller/$id'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/marketplace/help'
     | '/marketplace/settings'
     | '/onboarding/campus-spaces'
+    | '/connect/$section/$topic'
     | '/marketplace/chat/$id'
     | '/marketplace/product/$id'
     | '/marketplace/seller/$id'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/marketplace_/help'
     | '/marketplace_/settings'
     | '/onboarding/campus-spaces'
+    | '/connect/$section/$topic'
     | '/marketplace_/chat/$id'
     | '/marketplace_/product/$id'
     | '/marketplace_/seller/$id'
@@ -360,6 +372,7 @@ export interface RootRouteChildren {
   MarketplaceHelpRoute: typeof MarketplaceHelpRoute
   MarketplaceSettingsRoute: typeof MarketplaceSettingsRoute
   OnboardingCampusSpacesRoute: typeof OnboardingCampusSpacesRoute
+  ConnectSectionTopicRoute: typeof ConnectSectionTopicRoute
   MarketplaceChatIdRoute: typeof MarketplaceChatIdRoute
   MarketplaceProductIdRoute: typeof MarketplaceProductIdRoute
   MarketplaceSellerIdRoute: typeof MarketplaceSellerIdRoute
@@ -367,102 +380,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tuition': {
-      id: '/tuition'
-      path: '/tuition'
-      fullPath: '/tuition'
-      preLoaderRoute: typeof TuitionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/roommates': {
-      id: '/roommates'
-      path: '/roommates'
-      fullPath: '/roommates'
-      preLoaderRoute: typeof RoommatesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rides': {
-      id: '/rides'
-      path: '/rides'
-      fullPath: '/rides'
-      preLoaderRoute: typeof RidesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notes': {
-      id: '/notes'
-      path: '/notes'
-      fullPath: '/notes'
-      preLoaderRoute: typeof NotesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace': {
-      id: '/marketplace'
-      path: '/marketplace'
-      fullPath: '/marketplace'
-      preLoaderRoute: typeof MarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lost-found': {
-      id: '/lost-found'
-      path: '/lost-found'
-      fullPath: '/lost-found'
-      preLoaderRoute: typeof LostFoundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/events': {
-      id: '/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof EventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dating': {
-      id: '/dating'
-      path: '/dating'
-      fullPath: '/dating'
-      preLoaderRoute: typeof DatingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/complete-profile': {
-      id: '/complete-profile'
-      path: '/complete-profile'
-      fullPath: '/complete-profile'
-      preLoaderRoute: typeof CompleteProfileRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -472,46 +394,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/complete-profile': {
+      id: '/complete-profile'
+      path: '/complete-profile'
+      fullPath: '/complete-profile'
+      preLoaderRoute: typeof CompleteProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding/campus-spaces': {
-      id: '/onboarding/campus-spaces'
-      path: '/onboarding/campus-spaces'
-      fullPath: '/onboarding/campus-spaces'
-      preLoaderRoute: typeof OnboardingCampusSpacesRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace_/settings': {
-      id: '/marketplace_/settings'
-      path: '/marketplace/settings'
-      fullPath: '/marketplace/settings'
-      preLoaderRoute: typeof MarketplaceSettingsRouteImport
+    '/dating': {
+      id: '/dating'
+      path: '/dating'
+      fullPath: '/dating'
+      preLoaderRoute: typeof DatingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace_/help': {
-      id: '/marketplace_/help'
-      path: '/marketplace/help'
-      fullPath: '/marketplace/help'
-      preLoaderRoute: typeof MarketplaceHelpRouteImport
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lost-found_/settings': {
-      id: '/lost-found_/settings'
-      path: '/lost-found/settings'
-      fullPath: '/lost-found/settings'
-      preLoaderRoute: typeof LostFoundSettingsRouteImport
+    '/lost-found': {
+      id: '/lost-found'
+      path: '/lost-found'
+      fullPath: '/lost-found'
+      preLoaderRoute: typeof LostFoundRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/signup': {
-      id: '/auth/signup'
-      path: '/signup'
-      fullPath: '/auth/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rides': {
+      id: '/rides'
+      path: '/rides'
+      fullPath: '/rides'
+      preLoaderRoute: typeof RidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roommates': {
+      id: '/roommates'
+      path: '/roommates'
+      fullPath: '/roommates'
+      preLoaderRoute: typeof RoommatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tuition': {
+      id: '/tuition'
+      path: '/tuition'
+      fullPath: '/tuition'
+      preLoaderRoute: typeof TuitionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
     '/auth/login': {
@@ -521,18 +506,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/marketplace_/seller/$id': {
-      id: '/marketplace_/seller/$id'
-      path: '/marketplace/seller/$id'
-      fullPath: '/marketplace/seller/$id'
-      preLoaderRoute: typeof MarketplaceSellerIdRouteImport
+    '/lost-found_/settings': {
+      id: '/lost-found_/settings'
+      path: '/lost-found/settings'
+      fullPath: '/lost-found/settings'
+      preLoaderRoute: typeof LostFoundSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/help': {
+      id: '/marketplace_/help'
+      path: '/marketplace/help'
+      fullPath: '/marketplace/help'
+      preLoaderRoute: typeof MarketplaceHelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/settings': {
+      id: '/marketplace_/settings'
+      path: '/marketplace/settings'
+      fullPath: '/marketplace/settings'
+      preLoaderRoute: typeof MarketplaceSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/campus-spaces': {
+      id: '/onboarding/campus-spaces'
+      path: '/onboarding/campus-spaces'
+      fullPath: '/onboarding/campus-spaces'
+      preLoaderRoute: typeof OnboardingCampusSpacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect/$section/$topic': {
+      id: '/connect/$section/$topic'
+      path: '/connect/$section/$topic'
+      fullPath: '/connect/$section/$topic'
+      preLoaderRoute: typeof ConnectSectionTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace_/chat/$id': {
+      id: '/marketplace_/chat/$id'
+      path: '/marketplace/chat/$id'
+      fullPath: '/marketplace/chat/$id'
+      preLoaderRoute: typeof MarketplaceChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace_/product/$id': {
@@ -542,11 +562,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace_/chat/$id': {
-      id: '/marketplace_/chat/$id'
-      path: '/marketplace/chat/$id'
-      fullPath: '/marketplace/chat/$id'
-      preLoaderRoute: typeof MarketplaceChatIdRouteImport
+    '/marketplace_/seller/$id': {
+      id: '/marketplace_/seller/$id'
+      path: '/marketplace/seller/$id'
+      fullPath: '/marketplace/seller/$id'
+      preLoaderRoute: typeof MarketplaceSellerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -587,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceHelpRoute: MarketplaceHelpRoute,
   MarketplaceSettingsRoute: MarketplaceSettingsRoute,
   OnboardingCampusSpacesRoute: OnboardingCampusSpacesRoute,
+  ConnectSectionTopicRoute: ConnectSectionTopicRoute,
   MarketplaceChatIdRoute: MarketplaceChatIdRoute,
   MarketplaceProductIdRoute: MarketplaceProductIdRoute,
   MarketplaceSellerIdRoute: MarketplaceSellerIdRoute,

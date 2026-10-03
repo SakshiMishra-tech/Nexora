@@ -89,3 +89,24 @@ export async function deleteDatingPhoto(publicUrl: string): Promise<void> {
     // Non-critical — silently swallow
   }
 }
+
+// ── Discover Feed ─────────────────────────────────────────────
+
+/**
+ * Fetch a list of active dating profiles for the Discover feed.
+ * Excludes the current user and any paused profiles.
+ */
+export async function fetchDiscoverProfiles(
+  currentUserId: string,
+  limit: number = 20
+): Promise<DatingProfile[]> {
+  const { data, error } = await supabase
+    .from("dating_profiles")
+    .select("*")
+    .neq("id", currentUserId)
+    .eq("pause_discover", false)
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}

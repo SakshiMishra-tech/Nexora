@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
-import { CampusConnectProfile } from "@/components/CampusConnectProfile";
+import { CampusConnectDashboard } from "@/components/dating/CampusConnectDashboard";
+import { CampusConnectSafety } from "@/components/dating/CampusConnectSafety";
+import { CampusConnectSupport } from "@/components/dating/CampusConnectSupport";
 import { ArrowRight, ShieldCheck, Lock, EyeOff, Play } from "lucide-react";
 import student1 from "@/assets/student-1.jpg";
 import student2 from "@/assets/student-2.jpg";
@@ -10,6 +12,14 @@ import campusScene from "@/assets/campus-scene.png";
 import coupleDate from "@/assets/couple-date.jpg";
 import coupleCampus from "@/assets/couple-campus.jpg";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { 
+  MegaMenu, 
+  DISCOVER_FEATURES, 
+  LIKES_FEATURES, 
+  STORIES_FEATURES 
+} from "@/components/dating/MegaMenu";
 
 export const Route = createFileRoute("/dating")({
   head: () => ({ meta: [{ title: "Nexora - Campus Connect" }] }),
@@ -17,25 +27,62 @@ export const Route = createFileRoute("/dating")({
 });
 
 function DatingRoute() {
-  const [view, setView] = useState<"landing" | "profile">("landing");
+  const [view, setView] = useState<"landing" | "dashboard" | "safety" | "support">("landing");
+  const [previousView, setPreviousView] = useState<"landing" | "dashboard">("landing");
+  const [initialTab, setInitialTab] = useState<string>("discover");
 
-  if (view === "profile") {
+  const goBack = () => setView(previousView);
+
+  const navigateToStandalone = (target: "safety" | "support") => {
+    setPreviousView(view === "dashboard" ? "dashboard" : "landing");
+    setView(target);
+  };
+
+  if (view === "dashboard") {
     return (
       <ModuleAccessBoundary moduleId="campus-connect">
-        <CampusConnectProfile onBack={() => setView("landing")} />
+        <CampusConnectDashboard 
+          onExit={() => setView("landing")} 
+          onNavigate={(tab) => navigateToStandalone(tab)}
+          initialTab={initialTab} 
+        />
+      </ModuleAccessBoundary>
+    );
+  }
+
+  if (view === "safety") {
+    return (
+      <ModuleAccessBoundary moduleId="campus-connect">
+        <CampusConnectSafety onBack={goBack} />
+      </ModuleAccessBoundary>
+    );
+  }
+
+  if (view === "support") {
+    return (
+      <ModuleAccessBoundary moduleId="campus-connect">
+        <CampusConnectSupport onBack={goBack} />
       </ModuleAccessBoundary>
     );
   }
 
   return (
     <ModuleAccessBoundary moduleId="campus-connect">
-      <CampusConnectPremiumLanding onGetStarted={() => setView("profile")} />
+      <CampusConnectPremiumLanding onGetStarted={(tab) => {
+        if (tab === "safety" || tab === "support") {
+          navigateToStandalone(tab);
+        } else {
+          setInitialTab(tab || "discover");
+          setView("dashboard");
+        }
+      }} />
     </ModuleAccessBoundary>
   );
 }
 
-function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: () => void }) {
+function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: (tab?: string) => void }) {
   const { user } = useAuth();
+  const [openMega, setOpenMega] = useState<"discover" | "likes" | "stories" | null>(null);
   
   // Subtle scroll listener for parallax background effects
   const [scrollY, setScrollY] = useState(0);
@@ -49,18 +96,44 @@ function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: () => voi
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 font-sans overflow-x-hidden">
       
       {/* ── Editorial Navbar ── */}
-      <nav className="fixed top-0 w-full z-50 px-6 py-6 flex items-center justify-between bg-background/50 backdrop-blur-xl border-b border-border">
-        <div className="flex items-center gap-3">
-          <span className="font-display font-black text-2xl tracking-tighter uppercase">
+      <nav className="fixed top-0 w-full z-50 px-6 py-4 flex items-center justify-between bg-background/70 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <span className="font-display font-black text-xl tracking-tighter uppercase text-foreground">
             NEXORA <span className="font-light text-muted-foreground">CONNECT</span>
           </span>
         </div>
+
+        {/* Bumble-style Center Links */}
+        <div className="hidden md:flex items-center gap-1 bg-muted/40 rounded-full p-1 border border-border/50">
+          {[
+            { id: "discover", label: "Discover", isMega: true },
+            { id: "likes", label: "Likes & Matches", isMega: true },
+            { id: "stories", label: "Stories", isMega: true },
+            { id: "safety", label: "Safety", isMega: false },
+            { id: "support", label: "Support", isMega: false }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                if (item.isMega) {
+                  setOpenMega(prev => prev === item.id ? null : item.id as any);
+                } else {
+                  onGetStarted(item.id);
+                }
+              }}
+              className="px-4 py-1.5 rounded-full text-sm font-semibold text-foreground hover:bg-background hover:shadow-sm transition-all"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         <button 
-          onClick={onGetStarted}
+          onClick={() => onGetStarted("profile")}
           className="group relative overflow-hidden bg-foreground text-background px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-transform hover:scale-105 shadow-xl"
         >
           <span className="relative z-10 flex items-center gap-2">
-            {user ? "My Profile" : "Enter"}
+            My Profile
             <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
           </span>
         </button>
@@ -111,7 +184,7 @@ function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: () => voi
               An exclusive, curated network for verified university students. Experience connections built on authenticity, shared ambition, and genuine campus culture.
             </p>
             <button 
-              onClick={onGetStarted}
+              onClick={() => onGetStarted("discover")}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-5 font-black text-sm uppercase tracking-widest transition-all hover:scale-105 flex items-center justify-center gap-3 shadow-2xl shadow-primary/25"
             >
               Discover People <ArrowRight className="w-4 h-4" />
@@ -264,7 +337,7 @@ function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: () => voi
             Join the vanguard of student connections. Your profile awaits.
           </p>
           <button 
-            onClick={onGetStarted}
+            onClick={() => onGetStarted("discover")}
             className="group bg-background text-foreground hover:bg-muted px-12 py-5 font-black text-sm uppercase tracking-[0.2em] transition-transform hover:scale-105 mx-auto flex items-center justify-center gap-4 shadow-2xl"
           >
             Enter Network <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
@@ -278,6 +351,28 @@ function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: () => voi
           © {new Date().getFullYear()} Nexora Connect. Verified students only.
         </p>
       </footer>
+      {/* ── Mega Menus ── */}
+      <MegaMenu
+        isOpen={openMega === "discover"}
+        onClose={() => setOpenMega(null)}
+        title="Explore Discover"
+        subtitle="Meet students from across campuses and discover people who share your interests, ambitions, and campus life."
+        features={DISCOVER_FEATURES}
+      />
+      <MegaMenu
+        isOpen={openMega === "likes"}
+        onClose={() => setOpenMega(null)}
+        title="Explore Likes & Matches"
+        subtitle="See who is interested, discover mutual connections, and turn a shared interest into a conversation."
+        features={LIKES_FEATURES}
+      />
+      <MegaMenu
+        isOpen={openMega === "stories"}
+        onClose={() => setOpenMega(null)}
+        title="Explore Stories"
+        subtitle="Share moments from campus life and discover what is happening across the Nexora community."
+        features={STORIES_FEATURES}
+      />
     </div>
   );
 }

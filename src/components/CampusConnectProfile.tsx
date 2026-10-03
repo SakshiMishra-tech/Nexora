@@ -609,7 +609,7 @@ export function CampusConnectProfile({ onBack }: CampusConnectProfileProps) {
   const isNew = !serverProfile;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="h-full w-full bg-background text-foreground">
       {/* ── Sticky Header ───────────────────────────────── */}
       <div className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
