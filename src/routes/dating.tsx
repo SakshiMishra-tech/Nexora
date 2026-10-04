@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { fetchMyDatingProfile } from "@/services/dating.service";
 import { ModuleAccessBoundary } from "@/components/ModuleAccessControl";
 import { CampusConnectDashboard } from "@/components/dating/CampusConnectDashboard";
 import { CampusConnectSafety } from "@/components/dating/CampusConnectSafety";
 import { CampusConnectSupport } from "@/components/dating/CampusConnectSupport";
-import { ArrowRight, ShieldCheck, Lock, EyeOff, Play } from "lucide-react";
+import { CampusConnectProfile } from "@/components/CampusConnectProfile";
+import { ArrowRight, ShieldCheck, Lock, EyeOff, Play, ChevronLeft } from "lucide-react";
 import student1 from "@/assets/student-1.jpg";
 import student2 from "@/assets/student-2.jpg";
 import student3 from "@/assets/student-3.jpg";
@@ -27,15 +29,59 @@ export const Route = createFileRoute("/dating")({
 });
 
 function DatingRoute() {
-  const [view, setView] = useState<"landing" | "dashboard" | "safety" | "support">("landing");
+  const { user } = useAuth();
+  const [view, setView] = useState<"landing" | "dashboard" | "safety" | "support" | "profile">("landing");
   const [previousView, setPreviousView] = useState<"landing" | "dashboard">("landing");
   const [initialTab, setInitialTab] = useState<string>("discover");
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const goBack = () => setView(previousView);
 
-  const navigateToStandalone = (target: "safety" | "support") => {
+  const navigateToStandalone = (target: "safety" | "support" | "profile") => {
     setPreviousView(view === "dashboard" ? "dashboard" : "landing");
     setView(target);
+  };
+
+  const handleGetStarted = async (tab?: string) => {
+    if (tab === "safety" || tab === "support" || tab === "profile") {
+      navigateToStandalone(tab as "safety" | "support" | "profile");
+      return;
+    }
+
+    if (!user) {
+      navigateToStandalone("profile");
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const data = await fetchMyDatingProfile(user.id);
+      const photos = data?.photos ?? [];
+      const isComplete = data && [
+        photos.length >= 3,
+        Boolean(data.name?.trim()),
+        Boolean(data.age),
+        Boolean(data.gender),
+        Boolean(data.interested_in),
+        Boolean(data.college?.trim()),
+        Boolean(data.campus?.trim()),
+        Boolean(data.department?.trim()),
+        Boolean(data.course?.trim()),
+        Boolean(data.year),
+        (data.bio?.trim().length ?? 0) >= 10,
+      ].every(Boolean);
+
+      if (!isComplete) {
+        navigateToStandalone("profile");
+      } else {
+        setInitialTab(tab || "discover");
+        setView("dashboard");
+      }
+    } catch (e) {
+      navigateToStandalone("profile");
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   if (view === "dashboard") {
@@ -66,16 +112,28 @@ function DatingRoute() {
     );
   }
 
+  if (view === "profile") {
+    return (
+      <ModuleAccessBoundary moduleId="campus-connect">
+        <CampusConnectProfile 
+          onBack={goBack} 
+          onSaveSuccess={() => {
+            setInitialTab("discover");
+            setView("dashboard");
+          }}
+        />
+      </ModuleAccessBoundary>
+    );
+  }
+
   return (
     <ModuleAccessBoundary moduleId="campus-connect">
-      <CampusConnectPremiumLanding onGetStarted={(tab) => {
-        if (tab === "safety" || tab === "support") {
-          navigateToStandalone(tab);
-        } else {
-          setInitialTab(tab || "discover");
-          setView("dashboard");
-        }
-      }} />
+      {profileLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/50 backdrop-blur-sm">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      )}
+      <CampusConnectPremiumLanding onGetStarted={handleGetStarted} />
     </ModuleAccessBoundary>
   );
 }
@@ -98,6 +156,13 @@ function CampusConnectPremiumLanding({ onGetStarted }: { onGetStarted: (tab?: st
       {/* ── Editorial Navbar ── */}
       <nav className="fixed top-0 w-full z-50 px-6 py-4 flex items-center justify-between bg-background/70 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center gap-2">
+          <Link
+            to="/"
+            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors mr-1"
+            aria-label="Back to Hub"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </Link>
           <span className="font-display font-black text-xl tracking-tighter uppercase text-foreground">
             NEXORA <span className="font-light text-muted-foreground">CONNECT</span>
           </span>

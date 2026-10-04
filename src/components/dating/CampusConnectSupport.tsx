@@ -146,18 +146,18 @@ export function CampusConnectSupport({ onBack }: SupportProps) {
       
       {/* ── Dynamic Header ── */}
       {onBack && (
-        <div className="absolute top-0 left-0 w-full z-50 px-6 py-6 flex items-center bg-gradient-to-b from-background/80 to-transparent">
+        <div className="fixed top-0 left-0 w-full z-50 px-6 py-6 flex items-center bg-gradient-to-b from-background/80 to-transparent pointer-events-none">
           {activeSearch ? (
             <button 
               onClick={clearSearch}
-              className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors text-sm font-bold tracking-wide group px-4 py-2"
+              className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors text-sm font-bold tracking-wide group px-4 py-2 pointer-events-auto bg-card/80 backdrop-blur-md rounded-full shadow-sm border border-border"
             >
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Back to Support
             </button>
           ) : (
             <button 
               onClick={onBack}
-              className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors text-sm font-bold tracking-wide uppercase group bg-muted/80 backdrop-blur-md px-4 py-2 rounded-full"
+              className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors text-sm font-bold tracking-wide uppercase group bg-muted/90 backdrop-blur-md px-4 py-2 rounded-full pointer-events-auto shadow-sm border border-border"
             >
               <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Support
             </button>

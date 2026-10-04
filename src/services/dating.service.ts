@@ -4,7 +4,7 @@
  * Covers: profile fetch, upsert, and photo upload / delete.
  */
 import { supabase } from "@/lib/supabase";
-import type { DatingProfile } from "@/types/dating";
+import type { DatingProfile, DatingMatch } from "@/types/dating";
 
 // ── Profile ───────────────────────────────────────────────────
 
@@ -109,4 +109,68 @@ export async function fetchDiscoverProfiles(
 
   if (error) throw error;
   return data || [];
+}
+
+/**
+ * Record a user's swipe action (like/pass/save) on a profile.
+ * Returns a match object if the action resulted in a mutual match.
+ */
+export async function recordSwipe(
+  senderId: string,
+  receiverId: string,
+  action: 'like' | 'pass' | 'save'
+): Promise<{ match: DatingMatch | null }> {
+  // 1. Record the swipe
+  const { error: swipeError } = await supabase
+    .from("dating_swipes")
+    .insert({ sender_id: senderId, receiver_id: receiverId, action });
+    
+  if (swipeError && swipeError.code !== '23505') { // Ignore unique constraint violation
+    throw swipeError;
+  }
+
+  // 2. Check for mutual match if action is 'like'
+  if (action === 'like') {
+    const { data: reciprocal, error: recError } = await supabase
+      .from("dating_swipes")
+      .select("*")
+      .eq("sender_id", receiverId)
+      .eq("receiver_id", senderId)
+      .eq("action", "like")
+      .maybeSingle();
+
+    if (recError) throw recError;
+
+    if (reciprocal) {
+      // It's a match! Create match record
+      // Always order IDs to prevent duplicate reverse rows
+      const u1 = senderId < receiverId ? senderId : receiverId;
+      const u2 = senderId < receiverId ? receiverId : senderId;
+      
+      const { data: match, error: matchError } = await supabase
+        .from("dating_matches")
+        .insert({ user1_id: u1, user2_id: u2 })
+        .select()
+        .single();
+        
+      if (matchError && matchError.code !== '23505') {
+        throw matchError;
+      }
+      
+      // If there was a unique constraint, it means match exists. We should fetch it.
+      if (matchError && matchError.code === '23505') {
+         const { data: existingMatch } = await supabase
+           .from("dating_matches")
+           .select("*")
+           .eq("user1_id", u1)
+           .eq("user2_id", u2)
+           .single();
+         return { match: existingMatch };
+      }
+
+      return { match: match || null };
+    }
+  }
+
+  return { match: null };
 }

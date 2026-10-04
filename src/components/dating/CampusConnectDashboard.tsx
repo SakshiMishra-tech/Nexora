@@ -23,12 +23,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Tab = "discover" | "likes" | "stories" | "profile";
+type Tab = "discover" | "likes" | "stories";
 type MegaMenuId = "discover" | "likes" | "stories" | null;
 
 interface DashboardProps {
   onExit: () => void;
-  onNavigate?: (view: "safety" | "support") => void;
+  onNavigate?: (view: "safety" | "support" | "profile") => void;
   initialTab?: string;
 }
 
@@ -61,8 +61,7 @@ export function CampusConnectDashboard({ onExit, onNavigate, initialTab = "disco
       case "discover": return <CampusConnectDiscover />;
       case "likes":    return <CampusConnectLikes />;
       case "stories":  return <CampusConnectStories />;
-      case "profile":  return <CampusConnectProfile onBack={() => setActiveTab("discover")} />;
-      default:         return null;
+      default:         return <CampusConnectDiscover />;
     }
   };
 
@@ -143,13 +142,8 @@ export function CampusConnectDashboard({ onExit, onNavigate, initialTab = "disco
           {/* Right: My Profile + Mobile hamburger */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigateTo("profile")}
-              className={cn(
-                "hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold transition-all border",
-                activeTab === "profile" && openMega === null
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-foreground text-background border-foreground hover:opacity-90"
-              )}
+              onClick={() => onNavigate?.("profile")}
+              className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold transition-all border bg-foreground text-background border-foreground hover:opacity-90"
             >
               <User className="w-3.5 h-3.5" />
               My Profile
@@ -176,14 +170,14 @@ export function CampusConnectDashboard({ onExit, onNavigate, initialTab = "disco
                   { id: "stories" as Tab,  label: "Stories",         icon: PlayCircle,  hasMega: true,  isStandalone: false },
                   { id: "safety",          label: "Safety",          icon: ShieldAlert, hasMega: false, isStandalone: true },
                   { id: "support",         label: "Support",         icon: HelpCircle,  hasMega: false, isStandalone: true },
-                  { id: "profile" as Tab,  label: "My Profile",      icon: User,        hasMega: false, isStandalone: false },
+                  { id: "profile",         label: "My Profile",      icon: User,        hasMega: false, isStandalone: true },
                 ]
               ).map(({ id, label, icon: Icon, hasMega, isStandalone }) => (
                 <button
                   key={id}
                   onClick={() => {
                     if (isStandalone) {
-                      onNavigate?.(id as "safety" | "support");
+                      onNavigate?.(id as "safety" | "support" | "profile");
                     } else if (hasMega) {
                       handleMegaToggle(id as MegaMenuId);
                     } else {

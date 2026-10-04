@@ -108,10 +108,10 @@ export function CampusConnectSafety({ onBack }: SafetyProps) {
       
       {/* ── Standalone Header ── */}
       {onBack && (
-        <div className="absolute top-0 left-0 w-full z-50 px-6 py-6 flex items-center">
+        <div className="fixed top-0 left-0 w-full z-50 px-6 py-6 flex items-center pointer-events-none">
           <button 
             onClick={onBack}
-            className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm font-bold tracking-wide uppercase group bg-black/20 backdrop-blur-md px-4 py-2 rounded-full"
+            className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm font-bold tracking-wide uppercase group bg-black/20 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-white/10 pointer-events-auto"
           >
             <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Safety
           </button>
